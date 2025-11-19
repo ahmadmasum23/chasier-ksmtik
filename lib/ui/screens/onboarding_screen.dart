@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:kasir_kosmetic/ui/constants/colors.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:kasir_kosmetic/ui/constants/images.dart';
+import 'package:kasir_kosmetic/ui/screens/login_screen.dart';
 import 'package:kasir_kosmetic/ui/screens/signup_screen.dart';
 
 
@@ -109,7 +110,7 @@ class OnboardingController extends GetxController {
 
   void nextPage() {
     if (currentPageIndex.value == 2) {
-      Get.offAll(() => SignUpScreen());
+      Get.offAll(() => LoginScreen());
     } else {
       int page = currentPageIndex.value + 1;
       pageController.animateToPage(

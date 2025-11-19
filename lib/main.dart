@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';   
-// import 'package:kasir_kosmetic/ui/routes/app_routes.dart';
-import 'package:kasir_kosmetic/ui/screens/management_produk.dart';
+import 'package:kasir_kosmetic/ui/routes/app_routes.dart';
+// import 'package:kasir_kosmetic/ui/screens/management_produk.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,9 +21,9 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'Kosmetik App',
       debugShowCheckedModeBanner: false,
-      // initialRoute: AppRoutes.splash,
-      // onGenerateRoute: AppRoutes.generateRoute,
-      home: ProductManagementScreen(),
+      initialRoute: AppRoutes.splash,
+      onGenerateRoute: AppRoutes.generateRoute,
+      // home: ProductManagementScreen(),
     );
   }
 }

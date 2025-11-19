@@ -3,8 +3,15 @@ import 'package:get/get.dart';
 import 'package:kasir_kosmetic/ui/constants/colors.dart';
 import 'package:kasir_kosmetic/ui/routes/app_routes.dart';
 
-class AppDrawer extends StatelessWidget {
+class AppDrawer extends StatefulWidget {
   const AppDrawer({super.key});
+
+  @override
+  State<AppDrawer> createState() => _AppDrawerState();
+}
+
+class _AppDrawerState extends State<AppDrawer> {
+
 
   @override
   Widget build(BuildContext context) {
@@ -21,6 +28,7 @@ class AppDrawer extends StatelessWidget {
               ),
             ),
           ),
+          // Search bar
           _item(Icons.dashboard, 'Dashboard', () {
             Navigator.pop(context);
             Get.offAllNamed(AppRoutes.dashboard);
@@ -32,6 +40,14 @@ class AppDrawer extends StatelessWidget {
           _item(Icons.inventory_2, 'Produk', () {
             Navigator.pop(context);
             Get.offAllNamed(AppRoutes.products);
+          }),
+          _item(Icons.inventory, 'Stock Product', () {
+            Navigator.pop(context);
+            Get.offAllNamed(AppRoutes.stock);
+          }),
+          _item(Icons.bar_chart, 'Laporan Penjualan', () {
+            Navigator.pop(context);
+            Get.offAllNamed(AppRoutes.salesReport);
           }),
           _item(Icons.people, 'Pelanggan', () {
             Navigator.pop(context);

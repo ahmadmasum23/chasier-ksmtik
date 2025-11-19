@@ -5,4 +5,7 @@ class AppColors {
   static const roseShade = Color(0xFFB76E79);
   static const makeupColor = Color(0xFFF8C8DC);
   static const skincareColor = Color(0xFFFFC998);
+  static const colorpenjualan = Color(0xFFFFBB8B);
+
+
 }

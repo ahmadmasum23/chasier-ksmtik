@@ -110,7 +110,7 @@ class _CashierScreenState extends State<CashierScreen> {
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
-                            color: Colors.pink,
+                            color: AppColors.roseShade,
                           ),
                         ),
                         Text(
@@ -118,7 +118,7 @@ class _CashierScreenState extends State<CashierScreen> {
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                            color: AppColors.roseShade,
                           ),
                         ),
                       ],
