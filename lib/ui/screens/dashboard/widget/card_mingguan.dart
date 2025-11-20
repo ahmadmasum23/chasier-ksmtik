@@ -1,4 +1,3 @@
-  // screens/card.dart
   import 'package:fl_chart/fl_chart.dart';
   import 'package:flutter/material.dart';
   import 'package:kasir_kosmetic/ui/constants/colors.dart';

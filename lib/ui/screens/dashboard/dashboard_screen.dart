@@ -1,11 +1,12 @@
-// ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
-import 'package:kasir_kosmetic/ui/widgets/card.dart';
+import 'package:kasir_kosmetic/ui/screens/dashboard/widget/total_card.dart';
+import 'package:kasir_kosmetic/ui/screens/dashboard/widget/card_bulanan.dart';
+import 'package:kasir_kosmetic/ui/screens/dashboard/widget/card_mingguan.dart';
+import 'package:kasir_kosmetic/ui/screens/dashboard/widget/income_card.dart';
+import 'package:kasir_kosmetic/ui/screens/dashboard/widget/card_transaction.dart';
+
 import 'package:kasir_kosmetic/ui/widgets/base_screen.dart';
-import 'package:kasir_kosmetic/ui/widgets/income_card.dart';
-import 'package:kasir_kosmetic/ui/widgets/monthly_sales_chart.dart';
-import 'package:kasir_kosmetic/ui/widgets/recent_transactions_card.dart';
-import 'package:kasir_kosmetic/ui/widgets/stat_card.dart';
+
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -109,62 +110,6 @@ class DashboardScreen extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildStatCard(String title, String value) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Text(title, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildIncomeCard(String title, String amount) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: const TextStyle(fontSize: 14, color: Colors.grey)),
-          const SizedBox(height: 4),
-          Text(
-            amount,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-        ],
       ),
     );
   }

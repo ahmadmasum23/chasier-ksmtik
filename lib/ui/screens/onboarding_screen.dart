@@ -4,7 +4,6 @@ import 'package:kasir_kosmetic/ui/constants/colors.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:kasir_kosmetic/ui/constants/images.dart';
 import 'package:kasir_kosmetic/ui/screens/login_screen.dart';
-import 'package:kasir_kosmetic/ui/screens/signup_screen.dart';
 
 
 class OnBoardingPage extends StatelessWidget {
@@ -57,20 +56,43 @@ class OnBoardingPage extends StatelessWidget {
 }
 
 
-class OnBoardingScreen extends StatelessWidget {
+class OnBoardingScreen extends StatefulWidget {
   const OnBoardingScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final controller = Get.put(OnboardingController());
+  State<OnBoardingScreen> createState() => _OnBoardingScreenState();
+}
 
+class _OnBoardingScreenState extends State<OnBoardingScreen> {
+  final PageController pageController = PageController();
+  int currentPageIndex = 0;
+
+  void nextPage() {
+    if (currentPageIndex == 2) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+    } else {
+      pageController.animateToPage(
+        currentPageIndex + 1,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
         children: [
           PageView(
-            controller: controller.pageController,
-            onPageChanged: controller.updatePageIndicator,
+            controller: pageController,
+            onPageChanged: (index) {
+              setState(() => currentPageIndex = index);
+            },
             children: const [
               OnBoardingPage(
                 image: AppImages.onboarding1,
@@ -89,12 +111,42 @@ class OnBoardingScreen extends StatelessWidget {
               ),
             ],
           ),
-          const OnBoardingNextButton(),
+
+          /// Next Button
+          Positioned(
+            left: (MediaQuery.of(context).size.width - 56) / 2,
+            bottom: MediaQuery.of(context).padding.bottom + 90,
+            child: ElevatedButton(
+              onPressed: nextPage,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.softPink,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 2),
+              ),
+              child: currentPageIndex == 2
+                  ? const Text(
+                      'Go',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.black,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    )
+                  : const Icon(
+                      Iconsax.arrow_right_3,
+                      color: Colors.black,
+                      size: 28,
+                    ),
+            ),
+          ),
         ],
       ),
     );
   }
 }
+
 
 class OnboardingController extends GetxController {
   static OnboardingController get instance => Get.find();

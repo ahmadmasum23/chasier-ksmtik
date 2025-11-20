@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kasir_kosmetic/ui/constants/colors.dart';
 import 'package:kasir_kosmetic/ui/widgets/base_screen.dart';
-import 'package:kasir_kosmetic/ui/widgets/checkout_screen.dart';
+import 'package:kasir_kosmetic/ui/screens/chasier/widget/checkout_screen.dart';
 
 class CashierScreen extends StatefulWidget {
   const CashierScreen({super.key});
@@ -175,13 +175,24 @@ class _CashierScreenState extends State<CashierScreen> {
                   "My Product",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                TextButton(
-                  onPressed: () {},
-                  child: const Text(
-                    "See All",
-                    style: TextStyle(
-                      color: Colors.blue,
-                      fontWeight: FontWeight.w600,
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: GestureDetector(
+                    onTap: () {},
+                    child: const Text(
+                      "See All",
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
                 ),

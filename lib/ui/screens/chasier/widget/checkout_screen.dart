@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kasir_kosmetic/ui/constants/colors.dart';
-import 'package:kasir_kosmetic/ui/widgets/success_payment_dialog.dart';
+import 'package:kasir_kosmetic/ui/screens/chasier/widget/success_payment_dialog.dart';
 
 class CheckoutModal extends StatefulWidget {
   final Map<int, int> cart;
