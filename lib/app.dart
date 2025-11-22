@@ -1,0 +1,21 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'core/theme/app_theme.dart';
+import 'core/routes/app_routes.dart';
+import 'features/onboarding/screens/splash_screen.dart';
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return GetMaterialApp(
+      title: 'Kasir Kosmetic',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
+      initialRoute: '/',
+      onGenerateRoute: AppRoutes.generateRoute,
+      home: const SplashScreen(),
+    );
+  }
+}
