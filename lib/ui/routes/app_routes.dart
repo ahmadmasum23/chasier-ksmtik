@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:kasir_kosmetic/ui/screens/chasier/chasier.dart';
+import 'package:kasir_kosmetic/ui/screens/dashboard/dashboard.dart';
+
 import 'package:kasir_kosmetic/ui/screens/customer_management_screen.dart';
-import 'package:kasir_kosmetic/ui/screens/dashboard/dashboard_screen.dart';
 import 'package:kasir_kosmetic/ui/screens/management_produk.dart';
 import 'package:kasir_kosmetic/ui/screens/stock_product_screen.dart';
 import 'package:kasir_kosmetic/ui/screens/sales_report_screen.dart';
 import 'package:kasir_kosmetic/ui/screens/splash_screen.dart';
 import 'package:kasir_kosmetic/ui/screens/login_screen.dart';
-import 'package:kasir_kosmetic/ui/screens/chasier/chasier.dart';
 import 'package:kasir_kosmetic/ui/screens/onboarding_screen.dart';
 
 class AppRoutes {

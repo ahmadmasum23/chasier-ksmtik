@@ -1,7 +1,7 @@
   import 'package:flutter/material.dart';
   import 'package:kasir_kosmetic/ui/constants/colors.dart';
   import 'package:kasir_kosmetic/ui/constants/images.dart';
-import 'package:kasir_kosmetic/ui/screens/dashboard/dashboard_screen.dart';
+import 'package:kasir_kosmetic/ui/screens/dashboard/dashboard.dart';
 
   class LoginScreen extends StatefulWidget {
     const LoginScreen({super.key});

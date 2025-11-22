@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';   
 import 'package:kasir_kosmetic/ui/routes/app_routes.dart';
-// import 'package:kasir_kosmetic/ui/screens/management_produk.dart';
+import 'package:kasir_kosmetic/ui/screens/chasier/chasier.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Inisialisasi locale untuk intl
   await initializeDateFormatting('id_ID', null);
 
   runApp(const MyApp());
@@ -23,7 +21,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: AppRoutes.splash,
       onGenerateRoute: AppRoutes.generateRoute,
-      // home: ProductManagementScreen(),
+      home: CashierScreen(),
     );
   }
 }
