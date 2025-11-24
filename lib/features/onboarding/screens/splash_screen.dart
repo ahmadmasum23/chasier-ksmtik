@@ -26,7 +26,6 @@ class SplashScreenState extends State<SplashScreen>
 
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
-        // Menggunakan Navigator dengan key jika diperlukan
         Get.offAllNamed(AppRoutes.onboarding);
       }
     });

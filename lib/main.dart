@@ -7,9 +7,6 @@ import 'app.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('id_ID', null);
-  
-  // Initialize Supabase
   await SupabaseClientService.initialize();
-
   runApp(const MyApp());
 }

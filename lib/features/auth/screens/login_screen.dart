@@ -17,6 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _rememberMe = false;
   bool _isLoading = false;
+  bool _isPasswordVisible = false;
 
   Future<void> _login() async {
     final email = _emailController.text.trim();
@@ -121,10 +122,19 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _passwordController,
                       label: 'Password',
                       icon: Icons.lock_outline,
-                      obscureText: true,
-                      suffixIcon: const Icon(
-                        Icons.visibility_off,
-                        color: Color(0xFF9CA3AF),
+                      obscureText: !_isPasswordVisible,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _isPasswordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                          color: Color(0xFF9CA3AF),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _isPasswordVisible = !_isPasswordVisible;
+                          });
+                        },
                       ),
                     ),
 
@@ -141,7 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   _rememberMe = value!;
                                 });
                               },
-                              activeColor: const Color(0xFF8B5CF6),
+                              activeColor: Colors.black,
                             ),
                             const Text(
                               'Remember me',
@@ -157,7 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: const Text(
                             'Forgot Password?',
                             style: TextStyle(
-                              color: Color(0xFF8B5CF6),
+                              color: Colors.black,
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                             ),
@@ -189,7 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 style: TextStyle(
                                   fontSize: 18,
                                   color: Colors.white,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.w600,  
                                 ),
                               ),
                       ),
@@ -222,10 +232,6 @@ class _LoginScreenState extends State<LoginScreen> {
         suffixIcon: suffixIcon,
         filled: true,
         fillColor: const Color(0xFFF3F4F6),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
-        ),
       ),
     );
   }

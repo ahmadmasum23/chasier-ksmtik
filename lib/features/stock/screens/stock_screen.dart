@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kasir_kosmetic/core/constants/app_colors.dart';
 import 'package:kasir_kosmetic/core/widgets/base_screen.dart';
 
 class StockProductScreen extends StatefulWidget {
@@ -10,294 +11,109 @@ class StockProductScreen extends StatefulWidget {
 }
 
 class _StockProductScreenState extends State<StockProductScreen> {
-  // Sample data - in a real app, this would come from a database or API
-  List<Map<String, dynamic>> products = [
+  // 0 = All, 1 = Stok Habis, 2 = Stok Menipis
+  int _selectedTab = 0;
+
+  final List<Map<String, dynamic>> products = [
     {
       "id": 1,
-      "name": "Lipstik Matte Long Lasting Makeup",
+      "name": "Lipstik Matte Long Lasting",
       "category": "Makeup",
+      "price": 89000,
       "stock": 45,
       "minStock": 10,
-      "unit": "pcs",
-      "lastUpdated": "2025-11-15",
+      "image": "assets/images/mackup.png",
     },
     {
       "id": 2,
-      "name": "Serum Vitamin C Skincare",
+      "name": "Serum Vitamin C",
       "category": "Skincare",
-      "stock": 46,
+      "price": 125000,
+      "stock": 8,
       "minStock": 15,
-      "unit": "pcs",
-      "lastUpdated": "2025-11-16",
+      "image": "assets/images/skincare.png",
     },
     {
       "id": 3,
-      "name": "Setting Spray Long Lasting Makeup",
+      "name": "Setting Spray Long Lasting",
       "category": "Makeup",
-      "stock": 45,
+      "price": 110000,
+      "stock": 0,
       "minStock": 20,
-      "unit": "pcs",
-      "lastUpdated": "2025-11-17",
+      "image": "assets/images/liftik.png",
     },
     {
       "id": 4,
-      "name": "Moisturizer Cream",
-      "category": "Skincare",
-      "stock": 5,
-      "minStock": 10,
-      "unit": "pcs",
-      "lastUpdated": "2025-11-17",
-    },
-    {
-      "id": 5,
-      "name": "Foundation Liquid",
+      "name": "Lipstik Matte Long Lasting",
       "category": "Makeup",
-      "stock": 12,
-      "minStock": 15,
-      "unit": "pcs",
-      "lastUpdated": "2025-11-16",
+      "price": 89000,
+      "stock": 3,
+      "minStock": 10,
+      "image": "assets/images/mackup.png",
     },
   ];
 
-  String? _selectedCategory;
-  bool _showLowStockOnly = false;
-
-  // Categories list
-  final List<String> categories = ["All", "Makeup", "Skincare"];
-
-  // Filtered products
-  List<Map<String, dynamic>> get filteredProducts {
-    List<Map<String, dynamic>> result = List.from(products);
-    
-    // Filter by category
-    if (_selectedCategory != null && _selectedCategory != "All") {
-      result = result.where((p) => p["category"] == _selectedCategory).toList();
+  List<Map<String, dynamic>> get currentList {
+    switch (_selectedTab) {
+      case 1:
+        return products.where((p) => p["stock"] == 0).toList();
+      case 2:
+        return products.where((p) => p["stock"] <= p["minStock"] && p["stock"] > 0).toList();
+      default:
+        return products;
     }
-    
-    // Filter by low stock
-    if (_showLowStockOnly) {
-      result = result.where((p) => p["stock"] <= p["minStock"]).toList();
-    }
-    
-    return result;
-  }
-
-  // Format number with thousand separator
-  String formatNumber(int number) {
-    return number.toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (m) => '${m[1]}.',
-    );
-  }
-
-  // Update stock
-  void _updateStock(int productId, int newStock) {
-    setState(() {
-      final index = products.indexWhere((p) => p["id"] == productId);
-      if (index != -1) {
-        products[index]["stock"] = newStock;
-        products[index]["lastUpdated"] = DateTime.now().toString().split(' ')[0];
-      }
-    });
-  }
-
-  // Show update stock dialog
-  void _showUpdateStockDialog(Map<String, dynamic> product) {
-    final TextEditingController stockController = TextEditingController(
-      text: product["stock"].toString(),
-    );
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text("Update Stock"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text("Product: ${product["name"]}"),
-            const SizedBox(height: 16),
-            TextField(
-              controller: stockController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: "New Stock Quantity",
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (stockController.text.isNotEmpty) {
-                final newStock = int.tryParse(stockController.text) ?? 0;
-                _updateStock(product["id"], newStock);
-                Get.back();
-              }
-            },
-            child: const Text("Update"),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return BaseScreen(
-      title: "Stock Product",
-      showProfile: true,
+      title: "Stok Barang",
+      showProfile: false,
       body: Column(
         children: [
-          // Filter section
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                // Category filter
-                Row(
-                  children: [
-                    const Text("Category:"),
-                    const SizedBox(width: 12),
-                    DropdownButton<String>(
-                      value: _selectedCategory ?? "All",
-                      items: categories.map((category) {
-                        return DropdownMenuItem(
-                          value: category,
-                          child: Text(category),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedCategory = value;
-                        });
-                      },
-                    ),
-                    const Spacer(),
-                    // Low stock toggle
-                    Row(
-                      children: [
-                        const Text("Low Stock Only"),
-                        Switch(
-                          value: _showLowStockOnly,
-                          onChanged: (value) {
-                            setState(() {
-                              _showLowStockOnly = value;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          
-          // Summary cards
+          const SizedBox(height: 16),
+
+          // 3 CARD TERPISAH (bukan TabBar lagi)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                _buildSummaryCard("Total Products", products.length.toString(), Colors.blue),
-                const SizedBox(width: 16),
-                _buildSummaryCard(
-                  "Low Stock Items", 
-                  filteredProducts.where((p) => p["stock"] <= p["minStock"]).length.toString(), 
-                  Colors.orange
+                _buildTabCard(
+                  title: "All Product",
+                  count: products.length,
+                  index: 0,
+                ),
+                const SizedBox(width: 12),
+                _buildTabCard(
+                  title: "Stok Habis",
+                  count: products.where((p) => p["stock"] == 0).length,
+                  index: 1,
+                ),
+                const SizedBox(width: 12),
+                _buildTabCard(
+                  title: "Stok Menipis",
+                  count: products.where((p) => p["stock"] <= p["minStock"] && p["stock"] > 0).length,
+                  index: 2,
                 ),
               ],
             ),
           ),
-          
-          const SizedBox(height: 16),
-          
-          // Products list
+
+          const SizedBox(height: 20),
+
+          // Konten List Produk
           Expanded(
-            child: filteredProducts.isEmpty
+            child: currentList.isEmpty
                 ? const Center(
                     child: Text(
-                      "No products found",
-                      style: TextStyle(fontSize: 18, color: Colors.grey),
+                      "Tidak ada produk",
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
                     ),
                   )
                 : ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: filteredProducts.length,
-                    itemBuilder: (context, index) {
-                      final product = filteredProducts[index];
-                      final isLowStock = product["stock"] <= product["minStock"];
-                      
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.all(16),
-                          title: Text(
-                            product["name"],
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 4),
-                              Text("Category: ${product["category"]}"),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Text("Last Updated: ${product["lastUpdated"]}"),
-                                  const Spacer(),
-                                  if (isLowStock)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.red,
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: const Text(
-                                        "LOW STOCK",
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          trailing: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                "${formatNumber(product["stock"])} ${product["unit"]}",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: isLowStock ? Colors.red : Colors.green,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                "Min: ${product["minStock"]}",
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
-                          ),
-                          onTap: () => _showUpdateStockDialog(product),
-                        ),
-                      );
-                    },
+                    itemCount: currentList.length,
+                    itemBuilder: (context, index) => _buildProductItem(currentList[index]),
                   ),
           ),
         ],
@@ -305,34 +121,129 @@ class _StockProductScreenState extends State<StockProductScreen> {
     );
   }
 
-  // Summary card widget
-  Widget _buildSummaryCard(String title, String value, Color color) {
-    return Expanded(
-      child: Card(
-        color: color.withOpacity(0.1),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
+  // CARD TERPISAH untuk setiap tab
+  Widget _buildTabCard({
+  required String title,
+  required int count,
+  required int index,
+}) {
+  final bool isSelected = _selectedTab == index;
+
+  return Expanded(
+    child: GestureDetector(
+      onTap: () => setState(() => _selectedTab = index),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.15),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? AppColors.roseShade : Colors.grey[700],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "$count Produk",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: isSelected ? AppColors.roseShade : Colors.black87,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+  Widget _buildProductItem(Map<String, dynamic> product) {
+    final bool isLow = product["stock"] <= product["minStock"];
+    final bool isOutOfStock = product["stock"] == 0;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.asset(
+              product["image"],
+              width: 60,
+              height: 60,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  width: 60,
+                  height: 60,
+                  color: Colors.grey[300],
+                  child: const Icon(Icons.image_not_supported),
+                );
+              },
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  product["name"],
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  product["category"],
+                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
+                "Stok : ${product["stock"]}",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: isOutOfStock || isLow ? Colors.red : Colors.black,
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-              ),
+              const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
             ],
           ),
-        ),
+        ],
       ),
     );
   }

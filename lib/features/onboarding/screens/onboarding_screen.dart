@@ -122,11 +122,11 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 2),
               ),
-              child: currentPageIndex == 2
+              child: currentPageIndex == 3
                   ? const Text(
                       'Go',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 16, 
                         color: Colors.black,
                         fontWeight: FontWeight.w600,
                       ),

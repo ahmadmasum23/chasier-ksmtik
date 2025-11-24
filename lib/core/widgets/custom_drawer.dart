@@ -42,7 +42,11 @@ class _AppDrawerState extends State<AppDrawer> {
             Get.back();
             Get.offAllNamed(AppRoutes.products);
           }),
-          _item(Icons.inventory, 'Stock Product', () {
+           _item(Icons.people, 'Pelanggan', () {
+            Get.back();
+            Get.offAllNamed(AppRoutes.customers);
+          }),
+          _item(Icons.inventory, 'Stok Barang', () {
             Get.back();
             Get.offAllNamed(AppRoutes.stock);
           }),
@@ -50,10 +54,7 @@ class _AppDrawerState extends State<AppDrawer> {
             Get.back();
             Get.offAllNamed(AppRoutes.salesReport);
           }),
-          _item(Icons.people, 'Pelanggan', () {
-            Get.back();
-            Get.offAllNamed(AppRoutes.customers);
-          }),
+         
           const Divider(),
           _item(Icons.logout, 'Logout', () => Get.back(), color: Colors.red),
         ],
