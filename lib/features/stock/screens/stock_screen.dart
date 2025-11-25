@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+// import 'package:get/get.dart';
 import 'package:kasir_kosmetic/core/constants/app_colors.dart';
 import 'package:kasir_kosmetic/core/widgets/base_screen.dart';
 
