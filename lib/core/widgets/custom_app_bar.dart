@@ -64,24 +64,34 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             ),
 
-            // Search Bar di bawahnya
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'Cari Product',
-                  hintStyle: const TextStyle(color: Colors.grey),
-                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                  filled: true,
-                  fillColor: const Color(0xFFF1F5F9),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-            ),
+           Padding(
+  padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+  child: TextField(
+    decoration: InputDecoration(
+      hintText: 'Cari Produk',
+      hintStyle: const TextStyle(
+        color: Color(0xFF94A3B8), // abu-abu soft
+        fontSize: 15,
+      ),
+      prefixIcon: const Icon(
+        Icons.search,
+        color: Color(0xFF94A3B8), // warna sama dengan hint
+        size: 22,
+      ),
+      filled: true,
+      fillColor: Color(0xFFF5F7FA), // background soft seperti gambar
+      contentPadding: const EdgeInsets.symmetric(
+        vertical: 14,
+        horizontal: 18,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(50), // full rounded / bulat
+        borderSide: BorderSide.none,
+      ),
+    ),
+  ),
+),
+
           ],
         ),
       ),

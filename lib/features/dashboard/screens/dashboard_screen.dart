@@ -36,6 +36,12 @@ class DashboardScreen extends StatelessWidget {
 
             IncomeCard(title: 'Pendapatan Hari Ini', amount: 'Rp 800.000'),
             const SizedBox(height: 12),
+
+             const Text(
+              'Penjualan 7 Hari Terakhir',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
             Card(
               elevation: 0,
               color: Colors.white,
