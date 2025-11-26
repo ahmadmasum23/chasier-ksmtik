@@ -17,6 +17,8 @@ class ProductItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+      print('🖼️ Product: ${product.nama}');
+  print('   URL: ${product.urlGambar}');
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(

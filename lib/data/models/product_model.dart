@@ -20,17 +20,17 @@ class ProductModel {
   });
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
-    return ProductModel(
-      id: json['id'] as int,
-      nama: json['nama'] as String,
-      hargaJual: (json['harga_jual'] as num).toDouble(),
-      hargaBeli: (json['harga_beli'] as num).toDouble(),
-      stok: json['stok'] as int,
-      urlGambar: json['url_gambar'] as String?,
-      dibuatPada: DateTime.parse(json['dibuat_pada'] as String),
-      kategori: json['kategori'] as String?,
-    );
-  }
+  return ProductModel(
+    id: (json['id'] ?? 0) as int, // Default ke 0 jika null
+    nama: json['nama'] as String,
+    hargaJual: (json['harga_jual'] as num?)?.toDouble() ?? 0.0,
+    hargaBeli: (json['harga_beli'] as num?)?.toDouble() ?? 0.0,
+    stok: (json['stok'] as int?) ?? 0,
+    urlGambar: json['url_gambar'] as String?,
+    dibuatPada: DateTime.parse(json['dibuat_pada'] as String),
+    kategori: json['kategori'] as String?,
+  );
+}
 
   // product_model.dart
   Map<String, dynamic> toJson({bool includeId = true}) {

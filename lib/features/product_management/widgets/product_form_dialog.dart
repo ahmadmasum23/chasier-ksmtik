@@ -9,11 +9,7 @@ class ProductFormDialog extends StatefulWidget {
   final ProductController controller;
   final ProductModel? product;
 
-  const ProductFormDialog({
-    super.key,
-    required this.controller,
-    this.product,
-  });
+  const ProductFormDialog({super.key, required this.controller, this.product});
 
   @override
   State<ProductFormDialog> createState() => _ProductFormDialogState();
@@ -24,7 +20,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
   final TextEditingController _priceCtrl = TextEditingController();
   final TextEditingController _purchasePriceCtrl = TextEditingController();
   final TextEditingController _stockCtrl = TextEditingController();
-  
+
   String? _selectedCategory;
   File? _selectedImageFile;
   Uint8List? _selectedImageWeb;
@@ -54,7 +50,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
         maxHeight: 800,
         imageQuality: 80,
       );
-      
+
       if (image != null) {
         if (kIsWeb) {
           final bytes = await image.readAsBytes();
@@ -75,83 +71,107 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
   }
 
   Future<void> _saveProduct() async {
+    // Validasi input
     if (_nameCtrl.text.isEmpty ||
         _priceCtrl.text.isEmpty ||
         _purchasePriceCtrl.text.isEmpty ||
         _stockCtrl.text.isEmpty ||
         _selectedCategory == null) {
-      // Tampilkan error
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Semua field harus diisi')));
       return;
     }
 
-    // ✅ UPLOAD GAMBAR KE SERVER ATAU GUNAKAN NULL
-    String? imageUrl = await _uploadImageToServer();
-    
-    // Jika tidak ada gambar yang diupload, gunakan null
-    // atau gambar existing untuk edit
-    if (imageUrl == null && widget.product != null) {
-      imageUrl = widget.product!.urlGambar;
-    }
+    try {
+      // ✅ UPLOAD GAMBAR KE SERVER ATAU GUNAKAN NULL
+      String? imageUrl = await _uploadImageToServer();
 
-    // ✅ BUAT PRODUCT DATA TANPA ID UNTUK ADD
-    final productData = {
-      'nama': _nameCtrl.text,
-      'harga_jual': double.parse(_priceCtrl.text.replaceAll(".", "")),
-      'harga_beli': double.parse(_purchasePriceCtrl.text.replaceAll(".", "")),
-      'stok': int.parse(_stockCtrl.text),
-      'url_gambar': imageUrl, // ✅ BISA NULL
-      'dibuat_pada': DateTime.now().toIso8601String(),
-      'kategori': _selectedCategory,
-    };
+      // Jika tidak ada gambar yang diupload, gunakan gambar existing untuk edit
+      if (imageUrl == null && widget.product != null) {
+        imageUrl = widget.product!.urlGambar;
+      }
 
-    bool success;
-    if (widget.product == null) {
-      // ✅ TAMBAH PRODUK BARU - PAKAI MAP DATA
-      success = await widget.controller.addProduct(productData as ProductModel);
-    } else {
-      // ✅ EDIT PRODUK - PAKAI PRODUCTMODEL DENGAN ID
-      final product = ProductModel(
-        id: widget.product!.id,
-        nama: _nameCtrl.text,
-        hargaJual: double.parse(_priceCtrl.text.replaceAll(".", "")),
-        hargaBeli: double.parse(_purchasePriceCtrl.text.replaceAll(".", "")),
-        stok: int.parse(_stockCtrl.text),
-        urlGambar: imageUrl,
-        dibuatPada: widget.product!.dibuatPada,
-        kategori: _selectedCategory,
-      );
-      success = await widget.controller.updateProduct(product);
-    }
+      // Parse data dengan error handling
+      final hargaJual =
+          double.tryParse(_priceCtrl.text.replaceAll(".", "")) ?? 0.0;
+      final hargaBeli =
+          double.tryParse(_purchasePriceCtrl.text.replaceAll(".", "")) ?? 0.0;
+      final stok = int.tryParse(_stockCtrl.text) ?? 0;
 
-    if (success) {
-      Navigator.of(context).pop();
+      bool success;
+      if (widget.product == null) {
+        // ✅ TAMBAH PRODUK BARU - BUAT OBJEK LANGSUNG
+        final product = ProductModel(
+          id: 0, // ID akan di-generate oleh database
+          nama: _nameCtrl.text,
+          hargaJual: hargaJual,
+          hargaBeli: hargaBeli,
+          stok: stok,
+          urlGambar: imageUrl,
+          dibuatPada: DateTime.now(),
+          kategori: _selectedCategory,
+        );
+        success = await widget.controller.addProduct(product);
+      } else {
+        // ✅ EDIT PRODUK
+        final product = ProductModel(
+          id: widget.product!.id,
+          nama: _nameCtrl.text,
+          hargaJual: hargaJual,
+          hargaBeli: hargaBeli,
+          stok: stok,
+          urlGambar: imageUrl,
+          dibuatPada: widget.product!.dibuatPada,
+          kategori: _selectedCategory,
+        );
+        success = await widget.controller.updateProduct(product);
+      }
+
+      if (success && mounted) {
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      print('Error saving product: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
     }
   }
 
   Future<String?> _uploadImageToServer() async {
-    if (!_hasSelectedImage()) return null;
+  if (!_hasSelectedImage()) return null;
 
-    try {
-      // ✅ IMPLEMENTASI UPLOAD KE SUPABASE STORAGE
-      Uint8List imageBytes;
-      
-      if (kIsWeb) {
-        imageBytes = _selectedImageWeb!;
-      } else {
-        imageBytes = await _selectedImageFile!.readAsBytes();
-      }
-
-      final fileName = 'product_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      
-      // Upload ke Supabase Storage
-      final response = await widget.controller.uploadProductImage(imageBytes, fileName);
-      
-      return response;
-    } catch (e) {
-      print('Error uploading image: $e');
-      return null;
+  try {
+    Uint8List imageBytes;
+    
+    if (kIsWeb) {
+      imageBytes = _selectedImageWeb!;
+    } else {
+      imageBytes = await _selectedImageFile!.readAsBytes();
     }
+
+    // ✅ PASTIKAN HANYA NAMA FILE, TANPA PATH
+    final fileName = 'product_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    
+    print('📤 Uploading image: $fileName');
+    
+    // Upload ke Supabase Storage via controller
+    final imageUrl = await widget.controller.uploadProductImage(imageBytes, fileName);
+    
+    print('✅ Upload result: $imageUrl');
+    
+    return imageUrl;
+  } catch (e) {
+    print('Error uploading image: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Gagal upload gambar: $e'))
+    );
+    return null;
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -171,11 +191,11 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
-            
+
             // Image Upload Section
             _buildImageUploadSection(),
             const SizedBox(height: 16),
-            
+
             TextField(
               controller: _nameCtrl,
               decoration: const InputDecoration(
@@ -184,23 +204,20 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
               ),
             ),
             const SizedBox(height: 12),
-            
+
             DropdownButtonFormField<String>(
               value: _selectedCategory,
               decoration: const InputDecoration(
                 labelText: "Kategori",
                 border: OutlineInputBorder(),
               ),
-              items: widget.controller.categories.map((c) => 
-                DropdownMenuItem(
-                  value: c,
-                  child: Text(c),
-                )
-              ).toList(),
+              items: widget.controller.categories
+                  .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                  .toList(),
               onChanged: (v) => setState(() => _selectedCategory = v),
             ),
             const SizedBox(height: 12),
-            
+
             TextField(
               controller: _priceCtrl,
               keyboardType: TextInputType.number,
@@ -208,9 +225,22 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
                 labelText: "Harga Jual",
                 border: OutlineInputBorder(),
               ),
+              onChanged: (value) {
+                // Hanya allow angka
+                if (value.isNotEmpty &&
+                    double.tryParse(value.replaceAll(".", "")) == null) {
+                  _priceCtrl.text = _priceCtrl.text.substring(
+                    0,
+                    _priceCtrl.text.length - 1,
+                  );
+                  _priceCtrl.selection = TextSelection.fromPosition(
+                    TextPosition(offset: _priceCtrl.text.length),
+                  );
+                }
+              },
             ),
             const SizedBox(height: 12),
-            
+
             TextField(
               controller: _purchasePriceCtrl,
               keyboardType: TextInputType.number,
@@ -220,7 +250,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
               ),
             ),
             const SizedBox(height: 12),
-            
+
             TextField(
               controller: _stockCtrl,
               keyboardType: TextInputType.number,
@@ -230,7 +260,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
               ),
             ),
             const SizedBox(height: 24),
-            
+
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -287,20 +317,14 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
     // Tampilkan gambar yang dipilih
     if (_hasSelectedImage()) {
       if (kIsWeb && _selectedImageWeb != null) {
-        return Image.memory(
-          _selectedImageWeb!,
-          fit: BoxFit.cover,
-        );
+        return Image.memory(_selectedImageWeb!, fit: BoxFit.cover);
       } else if (!kIsWeb && _selectedImageFile != null) {
-        return Image.file(
-          _selectedImageFile!,
-          fit: BoxFit.cover,
-        );
+        return Image.file(_selectedImageFile!, fit: BoxFit.cover);
       }
     }
-    
+
     // Tampilkan gambar existing dari produk
-    if (widget.product?.urlGambar != null && 
+    if (widget.product?.urlGambar != null &&
         !widget.product!.urlGambar!.startsWith('blob:')) {
       return Image.network(
         widget.product!.urlGambar!,
@@ -308,14 +332,14 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
         errorBuilder: (_, __, ___) => _buildPlaceholder(),
       );
     }
-    
+
     // Default placeholder
     return _buildPlaceholder();
   }
 
   bool _hasSelectedImage() {
-    return (kIsWeb && _selectedImageWeb != null) || 
-           (!kIsWeb && _selectedImageFile != null);
+    return (kIsWeb && _selectedImageWeb != null) ||
+        (!kIsWeb && _selectedImageFile != null);
   }
 
   Widget _buildPlaceholder() {
@@ -324,10 +348,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
       children: [
         Icon(Icons.camera_alt, size: 40, color: Colors.grey.shade400),
         const SizedBox(height: 8),
-        Text(
-          "Upload Gambar",
-          style: TextStyle(color: Colors.grey.shade500),
-        ),
+        Text("Upload Gambar", style: TextStyle(color: Colors.grey.shade500)),
       ],
     );
   }
@@ -340,4 +361,4 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
     _stockCtrl.dispose();
     super.dispose();
   }
-} 
+}

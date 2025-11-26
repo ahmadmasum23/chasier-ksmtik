@@ -15,7 +15,6 @@ class ExportPdfButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(30),
-          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 2)],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

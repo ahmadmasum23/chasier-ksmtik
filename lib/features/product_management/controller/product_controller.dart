@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-
 import 'package:get/get.dart';
 import 'package:kasir_kosmetic/data/models/product_model.dart';
 import 'package:kasir_kosmetic/data/services/product_service.dart';
@@ -46,9 +45,8 @@ class ProductController extends GetxController {
 
   Future<bool> addProduct(ProductModel product) async {
     try {
-      // ✅ BUAT PRODUCT BARU TANPA ID (Supabase akan generate otomatis)
       final productToAdd = ProductModel(
-        id: 0, // ✅ Biarkan 0, Supabase akan auto-increment
+        id: 0,
         nama: product.nama,
         hargaJual: product.hargaJual,
         hargaBeli: product.hargaBeli,
@@ -108,5 +106,17 @@ class ProductController extends GetxController {
     );
   }
 
-  Future uploadProductImage(Uint8List imageBytes, String fileName) async {}
+  // ✅ PERBAIKI METHOD INI - JANGAN KOSONG
+  Future<String?> uploadProductImage(Uint8List imageBytes, String fileName) async {
+    try {
+      print('🔼 Mulai upload gambar: $fileName');
+      final imageUrl = await _productService.uploadImageToStorage(imageBytes, fileName);
+      print('✅ Upload berhasil: $imageUrl');
+      return imageUrl;
+    } catch (e) {
+      print('❌ Error upload gambar: $e');
+      Get.snackbar("Error", "Gagal upload gambar: $e");
+      return null;
+    }
+  }
 }
