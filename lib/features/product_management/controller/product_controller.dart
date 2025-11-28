@@ -11,7 +11,7 @@ class ProductController extends GetxController {
   final RxBool isLoading = true.obs;
   final RxString selectedCategory = ''.obs;
   
-  final List<String> categories = ["makeup", "skincare"];
+  final List<String> categories = ["Makeup", "Skincare"];
 
   @override
   void onInit() {

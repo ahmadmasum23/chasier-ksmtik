@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kasir_kosmetic/core/constants/app_colors.dart';
 
 class AddProductFAB extends StatelessWidget {
   final VoidCallback onPressed;
@@ -18,18 +19,11 @@ class AddProductFAB extends StatelessWidget {
         child: Container(
           width: 56,
           height: 56,
-          decoration: const BoxDecoration(
-            color: Colors.pink,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 6,
-                offset: Offset(0, 2),
-              ),
-            ],
+          decoration: BoxDecoration(
+            color: AppColors.makeupColor,
+            borderRadius: BorderRadius.circular(12), 
           ),
-          child: const Icon(Icons.add, color: Colors.white, size: 32),
+          child: const Icon(Icons.add, color: Colors.black, size: 32), // Ikon hitam
         ),
       ),
     );

@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:kasir_kosmetic/core/constants/app_images.dart';
 
-
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final VoidCallback? onMenuPressed;
@@ -10,7 +9,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   const CustomAppBar({
     super.key,
     this.title = 'Dashboard',
-    this.onMenuPressed, required bool showProfile,
+    this.onMenuPressed,
   });
 
   @override
@@ -19,17 +18,15 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       decoration: const BoxDecoration(
         color: Colors.white,
         boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            offset: Offset(0, 2),
-            blurRadius: 8,
-          ),
+          BoxShadow(color: Colors.black12, offset: Offset(0, 2), blurRadius: 8),
         ],
       ),
       child: SafeArea(
         child: Column(
           children: [
-            // Bagian atas: Menu - Title - Profile
+            // =====================
+            // ROW ATAS: Menu - Title - Profile
+            // =====================
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
@@ -41,6 +38,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                           Scaffold.of(context).openDrawer();
                         },
                   ),
+
                   Expanded(
                     child: Center(
                       child: Text(
@@ -54,44 +52,40 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     ),
                   ),
 
-                  // Foto Profil
                   const CircleAvatar(
                     radius: 20,
-                   backgroundImage: AssetImage(AppImages.userProfile),
+                    backgroundImage: AssetImage(AppImages.userProfile),
                   ),
-                  const SizedBox(width: 8), 
                 ],
               ),
             ),
 
-           Padding(
-  padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-  child: TextField(
-    decoration: InputDecoration(
-      hintText: 'Cari Produk',
-      hintStyle: const TextStyle(
-        color: Color(0xFF94A3B8), // abu-abu soft
-        fontSize: 15,
-      ),
-      prefixIcon: const Icon(
-        Icons.search,
-        color: Color(0xFF94A3B8), // warna sama dengan hint
-        size: 22,
-      ),
-      filled: true,
-      fillColor: Color(0xFFF5F7FA), // background soft seperti gambar
-      contentPadding: const EdgeInsets.symmetric(
-        vertical: 14,
-        horizontal: 18,
-      ),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(50), // full rounded / bulat
-        borderSide: BorderSide.none,
-      ),
-    ),
-  ),
-),
-
+            // =====================
+            // SEARCH BAR DI BAWAHNYA
+            // =====================
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: Container(
+                height: 55,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Color(0xFFF5F7FA),
+                  borderRadius: BorderRadius.circular(40),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.search, color: Colors.grey, size: 24),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Cari Produk',
+                        style: TextStyle(color: Colors.grey, fontSize: 16),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -99,5 +93,5 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(140); // tinggi total (appbar + search)
+  Size get preferredSize => const Size.fromHeight(150);
 }

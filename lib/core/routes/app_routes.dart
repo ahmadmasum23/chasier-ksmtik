@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kasir_kosmetic/features/auth/screens/login_screen.dart';
 import 'package:kasir_kosmetic/features/cashier/screens/cashier_screen.dart';
-import 'package:kasir_kosmetic/features/customer_management/screens/customer_list_screen.dart';
+import 'package:kasir_kosmetic/features/customer_management/screens/customer_management_screen.dart';
 import 'package:kasir_kosmetic/features/dashboard/screens/dashboard_screen.dart';
 import 'package:kasir_kosmetic/features/onboarding/screens/onboarding_screen.dart';
 import 'package:kasir_kosmetic/features/onboarding/screens/splash_screen.dart';
@@ -37,7 +37,7 @@ class AppRoutes {
       case products:
         return MaterialPageRoute(builder: (_) => const ProductManagementScreen());
       case customers:
-        return MaterialPageRoute(builder: (_) => const CustomerManagementScreen());
+        return MaterialPageRoute(builder: (_) => CustomerManagementScreen());
       case stock:
         return MaterialPageRoute(builder: (_) => const StockProductScreen());
       case salesReport:

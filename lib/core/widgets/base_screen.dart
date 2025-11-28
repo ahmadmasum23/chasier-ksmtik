@@ -24,7 +24,7 @@ class BaseScreen extends StatelessWidget {
       backgroundColor: const Color(0xFFF8FAFC),
       drawer: const AppDrawer(),
       appBar: CustomAppBar(
-        showProfile: showProfile,
+        // showProfile: showProfile,
         title: title,   
         onMenuPressed: () {
           scaffoldKey.currentState?.openDrawer();

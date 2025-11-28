@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:kasir_kosmetic/core/constants/app_colors.dart';
 import 'dart:io';
 import 'package:kasir_kosmetic/data/models/product_model.dart';
 import 'package:kasir_kosmetic/features/product_management/controller/product_controller.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, Uint8List;
+import 'package:intl/intl.dart';
 
 class ProductFormDialog extends StatefulWidget {
   final ProductController controller;
@@ -26,6 +28,11 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
   Uint8List? _selectedImageWeb;
   final ImagePicker _imagePicker = ImagePicker();
 
+  // Helper: ekstrak angka dari teks (untuk simpan ke DB)
+  String _extractNumber(String input) {
+    return input.replaceAll(RegExp(r'[^\d]'), '');
+  }
+
   @override
   void initState() {
     super.initState();
@@ -36,10 +43,14 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
 
   void _initializeForm(ProductModel product) {
     _nameCtrl.text = product.nama;
-    _priceCtrl.text = product.hargaJual.toInt().toString();
-    _purchasePriceCtrl.text = product.hargaBeli.toInt().toString();
     _stockCtrl.text = product.stok.toString();
     _selectedCategory = product.kategori;
+
+    // Saat edit, tampilkan langsung format Rp
+    _priceCtrl.text =
+        'Rp ${NumberFormat('#,##0', 'id_ID').format(product.hargaJual.toInt())}';
+    _purchasePriceCtrl.text =
+        'Rp ${NumberFormat('#,##0', 'id_ID').format(product.hargaBeli.toInt())}';
   }
 
   Future<void> _pickImage() async {
@@ -71,7 +82,6 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
   }
 
   Future<void> _saveProduct() async {
-    // Validasi input
     if (_nameCtrl.text.isEmpty ||
         _priceCtrl.text.isEmpty ||
         _purchasePriceCtrl.text.isEmpty ||
@@ -84,26 +94,20 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
     }
 
     try {
-      // ✅ UPLOAD GAMBAR KE SERVER ATAU GUNAKAN NULL
       String? imageUrl = await _uploadImageToServer();
-
-      // Jika tidak ada gambar yang diupload, gunakan gambar existing untuk edit
       if (imageUrl == null && widget.product != null) {
         imageUrl = widget.product!.urlGambar;
       }
 
-      // Parse data dengan error handling
-      final hargaJual =
-          double.tryParse(_priceCtrl.text.replaceAll(".", "")) ?? 0.0;
+      final hargaJual = double.tryParse(_extractNumber(_priceCtrl.text)) ?? 0.0;
       final hargaBeli =
-          double.tryParse(_purchasePriceCtrl.text.replaceAll(".", "")) ?? 0.0;
+          double.tryParse(_extractNumber(_purchasePriceCtrl.text)) ?? 0.0;
       final stok = int.tryParse(_stockCtrl.text) ?? 0;
 
       bool success;
       if (widget.product == null) {
-        // ✅ TAMBAH PRODUK BARU - BUAT OBJEK LANGSUNG
         final product = ProductModel(
-          id: 0, // ID akan di-generate oleh database
+          id: 0,
           nama: _nameCtrl.text,
           hargaJual: hargaJual,
           hargaBeli: hargaBeli,
@@ -114,7 +118,6 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
         );
         success = await widget.controller.addProduct(product);
       } else {
-        // ✅ EDIT PRODUK
         final product = ProductModel(
           id: widget.product!.id,
           nama: _nameCtrl.text,
@@ -142,216 +145,328 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
   }
 
   Future<String?> _uploadImageToServer() async {
-  if (!_hasSelectedImage()) return null;
+    if (!_hasSelectedImage()) return null;
 
-  try {
-    Uint8List imageBytes;
-    
-    if (kIsWeb) {
-      imageBytes = _selectedImageWeb!;
-    } else {
-      imageBytes = await _selectedImageFile!.readAsBytes();
+    try {
+      Uint8List imageBytes;
+      if (kIsWeb) {
+        imageBytes = _selectedImageWeb!;
+      } else {
+        imageBytes = await _selectedImageFile!.readAsBytes();
+      }
+
+      final fileName = 'product_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final imageUrl = await widget.controller.uploadProductImage(
+        imageBytes,
+        fileName,
+      );
+      return imageUrl;
+    } catch (e) {
+      print('Error uploading image: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal upload gambar: $e')));
+      return null;
     }
-
-    // ✅ PASTIKAN HANYA NAMA FILE, TANPA PATH
-    final fileName = 'product_${DateTime.now().millisecondsSinceEpoch}.jpg';
-    
-    print('📤 Uploading image: $fileName');
-    
-    // Upload ke Supabase Storage via controller
-    final imageUrl = await widget.controller.uploadProductImage(imageBytes, fileName);
-    
-    print('✅ Upload result: $imageUrl');
-    
-    return imageUrl;
-  } catch (e) {
-    print('Error uploading image: $e');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Gagal upload gambar: $e'))
-    );
-    return null;
   }
-}
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-        left: 24,
-        right: 24,
-        top: 24,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              widget.product == null ? "Tambah Produk Baru" : "Edit Produk",
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-
-            // Image Upload Section
-            _buildImageUploadSection(),
-            const SizedBox(height: 16),
-
-            TextField(
-              controller: _nameCtrl,
-              decoration: const InputDecoration(
-                labelText: "Nama Produk",
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            DropdownButtonFormField<String>(
-              value: _selectedCategory,
-              decoration: const InputDecoration(
-                labelText: "Kategori",
-                border: OutlineInputBorder(),
-              ),
-              items: widget.controller.categories
-                  .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                  .toList(),
-              onChanged: (v) => setState(() => _selectedCategory = v),
-            ),
-            const SizedBox(height: 12),
-
-            TextField(
-              controller: _priceCtrl,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: "Harga Jual",
-                border: OutlineInputBorder(),
-              ),
-              onChanged: (value) {
-                // Hanya allow angka
-                if (value.isNotEmpty &&
-                    double.tryParse(value.replaceAll(".", "")) == null) {
-                  _priceCtrl.text = _priceCtrl.text.substring(
-                    0,
-                    _priceCtrl.text.length - 1,
-                  );
-                  _priceCtrl.selection = TextSelection.fromPosition(
-                    TextPosition(offset: _priceCtrl.text.length),
-                  );
-                }
-              },
-            ),
-            const SizedBox(height: 12),
-
-            TextField(
-              controller: _purchasePriceCtrl,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: "Harga Beli",
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            TextField(
-              controller: _stockCtrl,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: "Stok",
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.pink,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+    return Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Stack(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.product == null ? "Tambah Produk Baru" : "Edit Produk",
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
                 ),
-                onPressed: _saveProduct,
-                child: Text(
-                  widget.product == null ? "Tambah Produk" : "Update Produk",
-                  style: const TextStyle(color: Colors.white),
+                const SizedBox(height: 24),
+
+                // Nama Produk
+                _buildInputField(
+                  controller: _nameCtrl,
+                  placeholder: "Nama Produk",
                 ),
-              ),
+                const SizedBox(height: 16),
+
+                // Kategori
+                _buildCategoryDropdown(),
+                const SizedBox(height: 16),
+
+                // Harga Jual (khusus format Rupiah)
+                _buildRupiahField(
+                  controller: _priceCtrl,
+                  hint: "Harga jual Rp",
+                ),
+                const SizedBox(height: 16),
+
+                // Harga Beli (khusus format Rupiah)
+                _buildRupiahField(
+                  controller: _purchasePriceCtrl,
+                  hint: "Harga beli Rp",
+                ),
+                const SizedBox(height: 16),
+
+                // Stok
+                _buildInputField(
+                  controller: _stockCtrl,
+                  placeholder: "Stok",
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 24),
+
+                // Upload Gambar
+                _buildImageUploadSection(),
+                const SizedBox(height: 54),
+
+                // Tombol Simpan
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: _saveProduct,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.makeupColor,
+                      foregroundColor: Colors.grey,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: Text(
+                      widget.product == null ? "Tambah Produk" : "Simpan",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-          ],
-        ),
+          ),
+
+          // Tombol Tutup (X)
+          Positioned(
+            top: 12,
+            right: 12,
+            child: IconButton(
+              icon: const Icon(Icons.close, color: Colors.grey),
+              onPressed: () => Navigator.of(context).pop(),
+              tooltip: "Tutup",
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildImageUploadSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Gambar Produk",
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-        ),
-        const SizedBox(height: 8),
-        GestureDetector(
-          onTap: _pickImage,
-          child: Container(
-            width: double.infinity,
-            height: 150,
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(8),
-              color: Colors.grey.shade50,
-            ),
-            child: _buildImagePreview(),
+  // === WIDGET: Input Biasa (Nama, Stok) ===
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String placeholder,
+    TextInputType? keyboardType,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.pink.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: TextField(
+        controller: controller,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          hintText: placeholder,
+          hintStyle: const TextStyle(color: Colors.grey),
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          errorBorder: InputBorder.none,
+          disabledBorder: InputBorder.none,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          _hasSelectedImage() ? "Gambar dipilih" : "Klik untuk upload gambar",
-          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-        ),
-      ],
+      ),
     );
   }
 
-  Widget _buildImagePreview() {
-    // Tampilkan gambar yang dipilih
-    if (_hasSelectedImage()) {
-      if (kIsWeb && _selectedImageWeb != null) {
-        return Image.memory(_selectedImageWeb!, fit: BoxFit.cover);
-      } else if (!kIsWeb && _selectedImageFile != null) {
-        return Image.file(_selectedImageFile!, fit: BoxFit.cover);
-      }
-    }
+  // === WIDGET: Input Khusus Rupiah (Harga Jual & Beli) ===
+  Widget _buildRupiahField({
+    required TextEditingController controller,
+    required String hint,
+  }) {
+    // Cek apakah field sudah berisi angka (bukan hanya "Rp ")
+    bool hasValue =
+        controller.text.isNotEmpty &&
+        controller.text != 'Rp ' &&
+        controller.text.length > 3;
 
-    // Tampilkan gambar existing dari produk
-    if (widget.product?.urlGambar != null &&
-        !widget.product!.urlGambar!.startsWith('blob:')) {
-      return Image.network(
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.pink.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: TextField(
+        controller: controller,
+        keyboardType: TextInputType.number,
+        decoration: InputDecoration(
+          hintText: hint, // Misal: "Harga jual (contoh: Rp 25.000)"
+          hintStyle: const TextStyle(color: Colors.grey),
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          errorBorder: InputBorder.none,
+          disabledBorder: InputBorder.none,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
+        ),
+        onChanged: (rawInput) {
+          String numericOnly = rawInput.replaceAll(RegExp(r'[^\d]'), '');
+
+          if (numericOnly.isEmpty) {
+            // Kosongkan teks → biarkan hint muncul
+            controller.text = '';
+            return;
+          }
+
+          String formatted = NumberFormat(
+            '#,##0',
+            'id_ID',
+          ).format(int.tryParse(numericOnly) ?? 0);
+          String result = 'Rp $formatted';
+
+          controller.text = result;
+          controller.selection = TextSelection.fromPosition(
+            TextPosition(offset: result.length),
+          );
+        },
+      ),
+    );
+  }
+
+  // === WIDGET: Dropdown Kategori ===
+  Widget _buildCategoryDropdown() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.pink.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: DropdownButtonFormField<String>(
+        value: _selectedCategory,
+        decoration: InputDecoration(
+          hintText: "Kategori",
+          hintStyle: const TextStyle(color: Colors.grey),
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          errorBorder: InputBorder.none,
+          disabledBorder: InputBorder.none,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
+        ),
+        items: widget.controller.categories
+            .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+            .toList(),
+        onChanged: (v) => setState(() => _selectedCategory = v),
+      ),
+    );
+  }
+
+  // === WIDGET: Upload Gambar ===
+  Widget _buildImageUploadSection() {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      GestureDetector(
+        onTap: _pickImage,
+        child: Container(
+          width: double.infinity,
+          height: 280,
+          decoration: BoxDecoration(
+            color: AppColors.makeupColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: Center(
+            child: Container(
+              width: 200,
+              height: 200,
+              child: _buildImagePreview(),
+            ),
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+ Widget _buildImagePreview() {
+  // Jika ada gambar yang dipilih
+  if (_hasSelectedImage()) {
+    Widget imageWidget;
+    if (kIsWeb && _selectedImageWeb != null) {
+      imageWidget = Image.memory(_selectedImageWeb!, fit: BoxFit.cover);
+    } else if (!kIsWeb && _selectedImageFile != null) {
+      imageWidget = Image.file(_selectedImageFile!, fit: BoxFit.cover);
+    } else {
+      imageWidget = _buildPlaceholder();
+    }
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: imageWidget,
+    );
+  }
+
+  // Jika edit & ada gambar lama
+  if (widget.product?.urlGambar != null &&
+      !widget.product!.urlGambar!.startsWith('blob:')) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: Image.network(
         widget.product!.urlGambar!,
         fit: BoxFit.cover,
         errorBuilder: (_, __, ___) => _buildPlaceholder(),
-      );
-    }
-
-    // Default placeholder
-    return _buildPlaceholder();
+      ),
+    );
   }
+
+  // Placeholder default
+  return _buildPlaceholder();
+}
 
   bool _hasSelectedImage() {
     return (kIsWeb && _selectedImageWeb != null) ||
         (!kIsWeb && _selectedImageFile != null);
   }
 
-  Widget _buildPlaceholder() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(Icons.camera_alt, size: 40, color: Colors.grey.shade400),
-        const SizedBox(height: 8),
-        Text("Upload Gambar", style: TextStyle(color: Colors.grey.shade500)),
-      ],
-    );
-  }
+ Widget _buildPlaceholder() {
+  return Column(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      Icon(Icons.image_outlined, size: 90, color: Colors.grey.shade400),
+      const SizedBox(height: 4),
+      Text(
+        "Upload Gambar",
+        style: TextStyle(fontSize: 20, color: Colors.grey.shade500),
+      ),
+    ],
+  );
+}
 
   @override
   void dispose() {

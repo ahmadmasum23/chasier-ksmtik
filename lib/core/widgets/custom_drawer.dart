@@ -34,7 +34,7 @@ class _AppDrawerState extends State<AppDrawer> {
         children: [
           // Header dengan background pink
           Container(
-            height: 200,
+            height: 150,
             width: double.infinity,
             decoration: BoxDecoration(
               color: AppColors.softPink,
@@ -57,7 +57,7 @@ class _AppDrawerState extends State<AppDrawer> {
                       borderRadius: BorderRadius.circular(40),
                     ),
                     child: const Icon(
-                      Icons.store,
+                      Icons.person_2_rounded,
                       color: AppColors.softPink,
                       size: 40,
                     ),
