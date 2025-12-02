@@ -6,25 +6,25 @@ class PelangganService {
   final SupabaseClient _client = SupabaseClientService.instance;
 
   Future<List<Pelanggan>> getAllPelanggan({String? searchQuery}) async {
-    print('📡 [PelangganService] Memuat data pelanggan...');
+    print(' [PelangganService] Memuat data pelanggan...');
 
     try {
       var query = _client.from('pelanggan').select();
 
       if (searchQuery != null && searchQuery.trim().isNotEmpty) {
-        print('🔍 [PelangganService] Cari: "$searchQuery"');
+        print(' [PelangganService] Cari: "$searchQuery"');
         query = query.ilike('nama', '%$searchQuery%');
       }
 
       final response = await query.order('dibuat_pada', ascending: false);
 
       if (response == null) {
-        print('⚠️ [PelangganService] Response null');
+        print(' [PelangganService] Response null');
         return [];
       }
 
       final List<dynamic> data = response as List<dynamic>;
-      print('✅ [PelangganService] Berhasil memuat ${data.length} pelanggan');
+      print(' [PelangganService] Berhasil memuat ${data.length} pelanggan');
 
       final List<Pelanggan> list = data
           .map((e) => Pelanggan.fromJson(e as Map<String, dynamic>))

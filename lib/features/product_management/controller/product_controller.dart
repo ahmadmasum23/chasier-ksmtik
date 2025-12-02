@@ -106,7 +106,7 @@ class ProductController extends GetxController {
     );
   }
 
-  // ✅ PERBAIKI METHOD INI - JANGAN KOSONG
+
   Future<String?> uploadProductImage(Uint8List imageBytes, String fileName) async {
     try {
       print('🔼 Mulai upload gambar: $fileName');

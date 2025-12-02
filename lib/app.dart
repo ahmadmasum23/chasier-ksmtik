@@ -17,8 +17,8 @@ class MyApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       initialRoute: '/',
       onGenerateRoute: AppRoutes.generateRoute,
-      // home: const SplashScreen(),
-      home: const DashboardScreen(),
+      home: const SplashScreen(),
+      // home: const DashboardScreen(),
       // home: CustomerManagementScreen(),
     );
   }

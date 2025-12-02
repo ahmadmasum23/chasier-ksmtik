@@ -41,7 +41,7 @@ class CustomerManagementScreen extends StatelessWidget {
           const SizedBox(height: 16),
           Expanded(
             child: Obx(() {
-              if (controller.loading) {
+              if (controller.loading.value) {
                 return const Center(child: CircularProgressIndicator());
               }
 
@@ -90,7 +90,7 @@ class CustomerManagementScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
-                                  c.jenisKelamin ?? "Tidak diketahui",
+                                  c.jenisKelamin,
                                   style: TextStyle(
                                     color: Colors.pink[700],
                                     fontSize: 13,
@@ -120,13 +120,22 @@ class CustomerManagementScreen extends StatelessWidget {
                                 children: [
                                   IconButton(
                                     onPressed: () => _showAddEditDialog(c),
-                                    icon: const Icon(Icons.edit, color: Colors.grey, size: 20),
+                                    icon: const Icon(
+                                      Icons.edit,
+                                      color: Colors.grey,
+                                      size: 20,
+                                    ),
                                     padding: EdgeInsets.zero,
                                     constraints: const BoxConstraints(),
                                   ),
                                   IconButton(
-                                    onPressed: () => controller.deletePelanggan(c.id),
-                                    icon: const Icon(Icons.delete, color: Colors.grey, size: 20),
+                                    onPressed: () =>
+                                        controller.deletePelanggan(c.id),
+                                    icon: const Icon(
+                                      Icons.delete,
+                                      color: Colors.grey,
+                                      size: 20,
+                                    ),
                                     padding: EdgeInsets.zero,
                                     constraints: const BoxConstraints(),
                                   ),

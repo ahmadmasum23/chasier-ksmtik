@@ -1,8 +1,7 @@
-// lib/features/customer_management/widgets/add_edit_customer_dialog.dart
-
 import 'package:flutter/material.dart';
 import 'package:kasir_kosmetic/core/constants/app_colors.dart';
 import 'package:kasir_kosmetic/data/models/pelanggan_model.dart';
+import 'package:kasir_kosmetic/features/auth/widgets/custom_dialog.dart';
 
 class AddEditCustomerDialog extends StatefulWidget {
   final Pelanggan? initialData;
@@ -60,15 +59,43 @@ class _AddEditCustomerDialogState extends State<AddEditCustomerDialog> {
         : null;
     final gender = _selectedGender;
 
+    // VALIDASI WAJIB ISI
     if (nama.isEmpty || nomorHp.isEmpty || gender == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Nama, Nomor HP, dan Jenis Kelamin wajib diisi!"),
-        ),
+      CustomDialog.show(
+        title: "Field Belum Lengkap",
+        message: "Nama, Nomor HP, dan Jenis Kelamin wajib diisi!",
+        type: DialogType.warning,
       );
       return;
     }
 
+    // VALIDASI EMAIL
+    if (email != null) {
+      final emailRegex = RegExp(
+        r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
+      );
+      if (!emailRegex.hasMatch(email)) {
+        CustomDialog.show(
+          title: "Email Tidak Valid",
+          message: "Masukkan format email yang benar (contoh: nama@gmail.com).",
+          type: DialogType.error,
+        );
+        return;
+      }
+    }
+
+    // VALIDASI NOMOR HP: hanya angka, panjang minimal 10 maksimal 15
+    final hpRegex = RegExp(r'^[0-9]{10,15}$');
+    if (!hpRegex.hasMatch(nomorHp)) {
+      CustomDialog.show(
+        title: "Nomor HP Tidak Valid",
+        message: "Nomor HP harus 10–15 digit dan hanya angka.",
+        type: DialogType.error,
+      );
+      return;
+    }
+
+    // Jika lolos semua validasi → simpan
     widget.onSave(nama, nomorHp, email, alamat, gender);
     Navigator.of(context).pop();
   }
@@ -79,7 +106,6 @@ class _AddEditCustomerDialogState extends State<AddEditCustomerDialog> {
 
     return Dialog(
       backgroundColor: Colors.white,
-      // TANPA border radius di dialog utama
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Stack(
         children: [
@@ -184,7 +210,7 @@ class _AddEditCustomerDialogState extends State<AddEditCustomerDialog> {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.makeupColor,
-        borderRadius: BorderRadius.circular(20), 
+        borderRadius: BorderRadius.circular(20),
       ),
       child: TextField(
         controller: controller,
@@ -207,7 +233,6 @@ class _AddEditCustomerDialogState extends State<AddEditCustomerDialog> {
     );
   }
 
-  // Dropdown jenis kelamin
   Widget _buildGenderDropdown() {
     return Container(
       decoration: BoxDecoration(

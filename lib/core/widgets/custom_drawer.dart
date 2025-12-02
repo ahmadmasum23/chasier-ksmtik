@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kasir_kosmetic/core/constants/app_colors.dart';
 import 'package:kasir_kosmetic/core/routes/app_routes.dart';
+import 'package:kasir_kosmetic/features/auth/screens/login_screen.dart';
 
 class AppDrawer extends StatefulWidget {
   const AppDrawer({super.key});
@@ -184,10 +185,21 @@ class _AppDrawerState extends State<AppDrawer> {
               icon: Icons.logout,
               title: 'Logout',
               route: '/logout', // Route khusus untuk logout
-              onTap: () {
-                Get.back();
-                // Tambahkan logika logout di sini
-              },
+             onTap: () {
+  Get.back(); // Tutup drawer dulu
+
+  // Tambahkan logika logout di sini (misal hapus token, clear session)
+  // await AuthService.logout();
+
+  // Arahkan ke halaman LoginScreen
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const LoginScreen(),
+    ),
+  );
+},
+
               color: Colors.red,
             ),
           ),

@@ -6,6 +6,7 @@ import 'package:kasir_kosmetic/data/models/product_model.dart';
 import 'package:kasir_kosmetic/features/product_management/controller/product_controller.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, Uint8List;
 import 'package:intl/intl.dart';
+import 'package:kasir_kosmetic/core/widgets/app_alert.dart';
 
 class ProductFormDialog extends StatefulWidget {
   final ProductController controller;
@@ -27,8 +28,8 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
   File? _selectedImageFile;
   Uint8List? _selectedImageWeb;
   final ImagePicker _imagePicker = ImagePicker();
+  bool warned = false;
 
-  // Helper: ekstrak angka dari teks (untuk simpan ke DB)
   String _extractNumber(String input) {
     return input.replaceAll(RegExp(r'[^\d]'), '');
   }
@@ -82,14 +83,42 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
   }
 
   Future<void> _saveProduct() async {
-    if (_nameCtrl.text.isEmpty ||
-        _priceCtrl.text.isEmpty ||
-        _purchasePriceCtrl.text.isEmpty ||
-        _stockCtrl.text.isEmpty ||
-        _selectedCategory == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Semua field harus diisi')));
+    if (_nameCtrl.text.isEmpty) {
+      AppAlert.warning(context, "Nama produk wajib diisi.");
+      return;
+    }
+
+    if (_selectedCategory == null) {
+      AppAlert.warning(context, "Kategori belum dipilih.");
+      return;
+    }
+
+    if (_priceCtrl.text.isEmpty) {
+      AppAlert.warning(context, "Harga jual wajib diisi.");
+      return;
+    }
+
+    if (_purchasePriceCtrl.text.isEmpty) {
+      AppAlert.warning(context, "Harga beli wajib diisi.");
+      return;
+    }
+
+    if (_stockCtrl.text.isEmpty) {
+      AppAlert.warning(context, "Stok masih kosong.");
+      return;
+    }
+    if (double.tryParse(_extractNumber(_priceCtrl.text)) == null) {
+      AppAlert.warning(context, "Harga jual hanya boleh angka.");
+      return;
+    }
+
+    if (double.tryParse(_extractNumber(_purchasePriceCtrl.text)) == null) {
+      AppAlert.warning(context, "Harga beli hanya boleh angka.");
+      return;
+    }
+
+    if (int.tryParse(_stockCtrl.text) == null) {
+      AppAlert.warning(context, "Stok hanya boleh angka.");
       return;
     }
 
@@ -334,18 +363,26 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
           ),
         ),
         onChanged: (rawInput) {
-          String numericOnly = rawInput.replaceAll(RegExp(r'[^\d]'), '');
+          // String numericOnly = rawInput.replaceAll(RegExp(r'[^\d]'), '');
 
-          if (numericOnly.isEmpty) {
-            // Kosongkan teks → biarkan hint muncul
-            controller.text = '';
-            return;
+          // if (numericOnly.isEmpty) {
+          //   // Kosongkan teks → biarkan hint muncul
+          //   controller.text = '';
+          //   return;
+          // }
+          if (RegExp(r'[A-Za-z]').hasMatch(rawInput)) {
+            if (!warned) {
+              warned = true;
+              AppAlert.warning(context, "Hanya boleh angka!");
+            }
+          } else {
+            warned = false;
           }
 
           String formatted = NumberFormat(
             '#,##0',
             'id_ID',
-          ).format(int.tryParse(numericOnly) ?? 0);
+          ).format(int.tryParse ?? 0);
           String result = 'Rp $formatted';
 
           controller.text = result;
@@ -389,84 +426,84 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
 
   // === WIDGET: Upload Gambar ===
   Widget _buildImageUploadSection() {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      GestureDetector(
-        onTap: _pickImage,
-        child: Container(
-          width: double.infinity,
-          height: 280,
-          decoration: BoxDecoration(
-            color: AppColors.makeupColor,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade300),
-          ),
-          child: Center(
-            child: Container(
-              width: 200,
-              height: 200,
-              child: _buildImagePreview(),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        GestureDetector(
+          onTap: _pickImage,
+          child: Container(
+            width: double.infinity,
+            height: 280,
+            decoration: BoxDecoration(
+              color: AppColors.makeupColor,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: Center(
+              child: Container(
+                width: 200,
+                height: 200,
+                child: _buildImagePreview(),
+              ),
             ),
           ),
         ),
-      ),
-    ],
-  );
-}
+      ],
+    );
+  }
 
- Widget _buildImagePreview() {
-  // Jika ada gambar yang dipilih
-  if (_hasSelectedImage()) {
-    Widget imageWidget;
-    if (kIsWeb && _selectedImageWeb != null) {
-      imageWidget = Image.memory(_selectedImageWeb!, fit: BoxFit.cover);
-    } else if (!kIsWeb && _selectedImageFile != null) {
-      imageWidget = Image.file(_selectedImageFile!, fit: BoxFit.cover);
-    } else {
-      imageWidget = _buildPlaceholder();
+  Widget _buildImagePreview() {
+    // Jika ada gambar yang dipilih
+    if (_hasSelectedImage()) {
+      Widget imageWidget;
+      if (kIsWeb && _selectedImageWeb != null) {
+        imageWidget = Image.memory(_selectedImageWeb!, fit: BoxFit.cover);
+      } else if (!kIsWeb && _selectedImageFile != null) {
+        imageWidget = Image.file(_selectedImageFile!, fit: BoxFit.cover);
+      } else {
+        imageWidget = _buildPlaceholder();
+      }
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: imageWidget,
+      );
     }
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(10),
-      child: imageWidget,
-    );
-  }
 
-  // Jika edit & ada gambar lama
-  if (widget.product?.urlGambar != null &&
-      !widget.product!.urlGambar!.startsWith('blob:')) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(10),
-      child: Image.network(
-        widget.product!.urlGambar!,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _buildPlaceholder(),
-      ),
-    );
-  }
+    // Jika edit & ada gambar lama
+    if (widget.product?.urlGambar != null &&
+        !widget.product!.urlGambar!.startsWith('blob:')) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Image.network(
+          widget.product!.urlGambar!,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _buildPlaceholder(),
+        ),
+      );
+    }
 
-  // Placeholder default
-  return _buildPlaceholder();
-}
+    // Placeholder default
+    return _buildPlaceholder();
+  }
 
   bool _hasSelectedImage() {
     return (kIsWeb && _selectedImageWeb != null) ||
         (!kIsWeb && _selectedImageFile != null);
   }
 
- Widget _buildPlaceholder() {
-  return Column(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-      Icon(Icons.image_outlined, size: 90, color: Colors.grey.shade400),
-      const SizedBox(height: 4),
-      Text(
-        "Upload Gambar",
-        style: TextStyle(fontSize: 20, color: Colors.grey.shade500),
-      ),
-    ],
-  );
-}
+  Widget _buildPlaceholder() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.image_outlined, size: 90, color: Colors.grey.shade400),
+        const SizedBox(height: 4),
+        Text(
+          "Upload Gambar",
+          style: TextStyle(fontSize: 20, color: Colors.grey.shade500),
+        ),
+      ],
+    );
+  }
 
   @override
   void dispose() {
