@@ -1,23 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kasir_kosmetic/core/constants/app_colors.dart';
+import 'package:kasir_kosmetic/data/models/product_model.dart';
+import 'package:kasir_kosmetic/data/models/pelanggan_model.dart';
+import 'package:kasir_kosmetic/data/services/pelanggan_service.dart';
 import 'package:kasir_kosmetic/features/cashier/widgets/success_payment_dialog.dart';
-
-
 
 class CheckoutModal extends StatefulWidget {
   final Map<int, int> cart;
-  final List<Map<String, dynamic>> products;
-  final Function(int productId, int newQty)? onUpdateQuantity;
-  final Function(int productId)? onRemoveItem;
+  final List<ProductModel> products;
   final VoidCallback onPaymentSuccess;
 
   const CheckoutModal({
     super.key,
     required this.cart,
     required this.products,
-    this.onUpdateQuantity,
-    this.onRemoveItem,
     required this.onPaymentSuccess,
   });
 
@@ -28,47 +25,107 @@ class CheckoutModal extends StatefulWidget {
 class _CheckoutModalState extends State<CheckoutModal> {
   String selectedCustomer = "Walk-in Customer";
   String selectedPayment = "Cash";
+  List<Pelanggan> _pelangganList = [];
+  bool _isLoadingPelanggan = true;
 
-  final List<String> customers = [
-    "Walk-in Customer",
-    "Member A",
-    "Member B",
-    "Member C",
-  ];
+  late Map<int, int> localCart;
+
   final List<String> payments = ["Cash", "E-Wallet", "Card"];
 
-  // Data produk sesuai dengan gambar
-  final List<Map<String, dynamic>> sampleProducts = [
-    {
-      "name": "Setting Spray Long Lasting",
-      "price": 99000,
-      "quantity": 4,
-      "total": 396000,
-    },
-    {
-      "name": "Lipstik Matte Long Lasting",
-      "price": 89000,
-      "quantity": 4,
-      "total": 356000,
-    },
-    {
-      "name": "Serum Vitamin C",
-      "price": 69000,
-      "quantity": 2,
-      "total": 138000,
-    },
-  ];
+  final TextEditingController _tunaiController = TextEditingController();
+  int? _tunaiAmount;
 
-  int get subtotal => 1138000;
-  int get totalDiscount => 69000;
+  final PelangganService _pelangganService = PelangganService();
+
+  @override
+  void initState() {
+    super.initState();
+    localCart = Map.from(widget.cart);
+    _loadPelanggan();
+  }
+
+  @override
+  void dispose() {
+    _tunaiController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadPelanggan() async {
+    try {
+      final pelanggans = await _pelangganService.getAllPelanggan();
+      if (mounted) {
+        setState(() {
+          _pelangganList = pelanggans;
+          _isLoadingPelanggan = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingPelanggan = false;
+        });
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Gagal memuat pelanggan: $e")),
+      );
+    }
+  }
+
+  List<String> get customerOptions {
+    final names = _pelangganList.map((p) => p.nama).toList();
+    return ["Walk-in Customer", ...names];
+  }
+
+  int get subtotal {
+    int total = 0;
+    localCart.forEach((id, qty) {
+      final product = widget.products.firstWhereOrNull((p) => p.id == id);
+      if (product != null) {
+        total += product.hargaJual.toInt() * qty;
+      }
+    });
+    return total;
+  }
+
+  int get totalDiscount => 0;
   int get total => subtotal - totalDiscount;
+  int? get kembalian => _tunaiAmount != null ? _tunaiAmount! - total : null;
 
   String formatRupiah(int amount) {
-    final formatted = amount.toString().replaceAllMapped(
+    if (amount == 0) return "Rp 0";
+    return "Rp ${amount.toString().replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
       (m) => '${m[1]}.',
-    );
-    return "Rp $formatted";
+    )}";
+  }
+
+  void _updateQty(int productId, int newQty) {
+    if (newQty <= 0) {
+      setState(() {
+        localCart.remove(productId);
+      });
+    } else {
+      setState(() {
+        localCart[productId] = newQty;
+      });
+    }
+  }
+
+  void _onTunaiChanged(String value) {
+    if (value.isEmpty) {
+      setState(() {
+        _tunaiAmount = null;
+      });
+      return;
+    }
+    final clean = value.replaceAll(RegExp(r'[^\d]'), '');
+    if (clean.isEmpty) {
+      _tunaiAmount = null;
+      return;
+    }
+    setState(() {
+      _tunaiAmount = int.parse(clean);
+    });
   }
 
   @override
@@ -84,187 +141,182 @@ class _CheckoutModalState extends State<CheckoutModal> {
         ),
         child: Column(
           children: [
-            // HEADER: Pelanggan
+            // HEADER
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        "Pelanggan",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () => Get.back(),
-                        icon: const Icon(Icons.close, color: Colors.grey, size: 24),
-                      ),
-                    ],
+                  const Text(
+                    "Pelanggan",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  Container(
-                    height: 52,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: selectedCustomer,
-                        isExpanded: true,
-                        icon: const Icon(
-                          Icons.keyboard_arrow_down_rounded,
-                          color: AppColors.roseShade,
-                          size: 28,
-                        ),
-                        style: const TextStyle(
-                          color: Colors.black87,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        items: customers
-                            .map(
-                              (c) => DropdownMenuItem(value: c, child: Text(c)),
-                            )
-                            .toList(),
-                        onChanged: (v) => setState(() => selectedCustomer = v!),
-                      ),
-                    ),
+                  IconButton(
+                    onPressed: () => Get.back(),
+                    icon: const Icon(Icons.close, color: Colors.grey, size: 24),
                   ),
                 ],
               ),
             ),
+
+            // DROPDOWN CUSTOMER
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: _isLoadingPelanggan
+                  ? const Center(child: CircularProgressIndicator())
+                  : Container(
+                      height: 52,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: selectedCustomer,
+                          isExpanded: true,
+                          icon: const Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            color: AppColors.roseShade,
+                            size: 28,
+                          ),
+                          style: const TextStyle(
+                            color: Colors.black87,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          items: customerOptions
+                              .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                              .toList(),
+                          onChanged: (v) => setState(() => selectedCustomer = v!),
+                        ),
+                      ),
+                    ),
+            ),
+
+            const SizedBox(height: 16),
 
             // ITEM LIST
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                children: [
-                  // Setting Spray
-                  _buildProductItem(
-                    name: "Setting Spray Long Lasting",
-                    price: 99000,
-                    quantity: 4,
-                    total: 396000,
-                  ),
-                  const SizedBox(height: 12),
-                  
-                  // Lipstik Matte
-                  _buildProductItem(
-                    name: "Lipstik Matte Long Lasting",
-                    price: 89000,
-                    quantity: 4,
-                    total: 356000,
-                  ),
-                  const SizedBox(height: 12),
-                  
-                  // Serum Vitamin C
-                  _buildProductItem(
-                    name: "Serum Vitamin C",
-                    price: 69000,
-                    quantity: 2,
-                    total: 138000,
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // DISKON SECTION
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                decoration: const BoxDecoration(
-                  border: Border(
-                    top: BorderSide(color: Colors.grey, width: 0.5),
-                    bottom: BorderSide(color: Colors.grey, width: 0.5),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      "Diskon",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    Text(
-                      "- ${formatRupiah(totalDiscount)}",
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.red,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // METODE PEMBAYARAN SECTION
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  "Metode Pembayaran",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // PAYMENT METHOD CHIPS
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Row(
-                children: payments.map((method) {
-                  bool active = selectedPayment == method;
-                  return Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => selectedPayment = method),
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          color: active
-                              ? AppColors.softPink
-                              : Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: active ? AppColors.softPink : Colors.grey.shade300,
-                            width: 1,
+                children: localCart.entries.map((entry) {
+                  final productId = entry.key;
+                  final qty = entry.value;
+                  final product = widget.products.firstWhereOrNull((p) => p.id == productId);
+                  if (product == null) return const SizedBox.shrink();
+                  final price = product.hargaJual.toInt();
+                  final totalItem = price * qty;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
                           ),
-                        ),
-                        child: Text(
-                          method,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: active ? Colors.white : Colors.black87,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14,
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      product.nama,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      "${formatRupiah(price)} / pcs",
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  IconButton(
+                                    onPressed: () => _updateQty(productId, qty - 1),
+                                    icon: const Icon(Icons.remove, size: 20),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    splashRadius: 20,
+                                  ),
+                                  Text(
+                                    "$qty",
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: () => _updateQty(productId, qty + 1),
+                                    icon: const Icon(Icons.add, size: 20),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    splashRadius: 20,
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
-                        ),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Total:",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                              Text(
+                                formatRupiah(totalItem),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.softPink,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: IconButton(
+                              onPressed: () => _updateQty(productId, 0),
+                              icon: const Icon(Icons.delete_outline, color: Colors.grey),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              splashRadius: 20,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   );
@@ -272,27 +324,9 @@ class _CheckoutModalState extends State<CheckoutModal> {
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
-            // CASH SECTION
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  "Chas",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            // TOTAL SUMMARY
+            // 💳 CARD RINGKASAN PEMBAYARAN (SEMUA DALAM SATU)
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 24),
               padding: const EdgeInsets.all(20),
@@ -302,43 +336,152 @@ class _CheckoutModalState extends State<CheckoutModal> {
                 border: Border.all(color: Colors.grey.shade300),
               ),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Subtotal
                   _buildSummaryRow("Subtotal:", formatRupiah(subtotal)),
+
                   const SizedBox(height: 8),
+
+                  // Diskon
                   _buildSummaryRow(
-                    "Total Diskon:",
+                    "Diskon:",
                     "- ${formatRupiah(totalDiscount)}",
                     valueColor: Colors.red,
                   ),
+
                   const SizedBox(height: 12),
-                  Container(
-                    height: 1,
-                    color: Colors.grey.shade300,
-                  ),
+                  Container(height: 1, color: Colors.grey.shade300),
                   const SizedBox(height: 12),
-                  _buildSummaryRow(
-                    "Total:",
-                    formatRupiah(total),
-                    isBold: true,
-                  ),
+
+                  // Total
+                  _buildSummaryRow("Total:", formatRupiah(total), isBold: true),
+
                   const SizedBox(height: 16),
-                  Container(
-                    height: 1,
-                    color: Colors.grey.shade300,
+
+                  // METODE PEMBAYARAN
+                  const Text(
+                    "Metode Pembayaran",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
                   ),
                   const SizedBox(height: 12),
-                  _buildSummaryRow(
-                    "Bayar",
-                    formatRupiah(subtotal),
-                    isBold: true,
+                  Row(
+                    children: payments.map((method) {
+                      bool active = selectedPayment == method;
+                      return Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() {
+                            selectedPayment = method;
+                            if (method != "Cash") {
+                              _tunaiController.clear();
+                              _tunaiAmount = null;
+                            }
+                          }),
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            decoration: BoxDecoration(
+                              color: active ? AppColors.softPink : Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: active ? AppColors.softPink : Colors.grey.shade300,
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              method,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: active ? Colors.white : Colors.black87,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
                   ),
-                  const SizedBox(height: 4),
-                  _buildSummaryRow(
-                    "",
-                    "- ${formatRupiah(totalDiscount)}",
-                    valueColor: Colors.red,
-                    isBold: true,
-                  ),
+
+                  const SizedBox(height: 16),
+
+                  // 🔸 CASH: INPUT TUNAI + KEMBALIAN
+                  if (selectedPayment == "Cash") ...[
+                    const Text(
+                      "Tunai",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _tunaiController,
+                      onChanged: _onTunaiChanged,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        hintText: "Masukkan jumlah uang",
+                        prefixText: "Rp ",
+                        filled: true,
+                        fillColor: Colors.grey.shade100,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                    if (_tunaiAmount != null) ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text("Kembalian:", style: TextStyle(color: Colors.grey)),
+                          Text(
+                            kembalian! >= 0
+                                ? formatRupiah(kembalian!)
+                                : "Uang tidak cukup",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: kembalian! >= 0 ? Colors.green : Colors.red,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+
+                  // 🔸 E-WALLET
+                  if (selectedPayment == "E-Wallet") ...[
+                    const SizedBox(height: 12),
+                    Center(
+                      child: Column(
+                        children: [
+                          Icon(Icons.qr_code, size: 50, color: AppColors.roseShade),
+                          const SizedBox(height: 8),
+                          const Text("Scan QR untuk Bayar", style: TextStyle(fontSize: 14)),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  // 🔸 CARD
+                  if (selectedPayment == "Card" ) ...[
+                    const SizedBox(height: 12),
+                    Center(
+                      child: Column(
+                        children: [
+                          Icon(Icons.credit_card, size: 50, color: AppColors.roseShade),
+                          const SizedBox(height: 8),
+                          const Text("Tap atau Masukkan Kartu", style: TextStyle(fontSize: 14)),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -352,17 +495,30 @@ class _CheckoutModalState extends State<CheckoutModal> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    showDialog(
-                      context: context,
-                      barrierDismissible: false,
-                      builder: (_) => SuccessPaymentDialog(
-                        totalAmount: total,
-                        paymentMethod: selectedPayment,
-                        customerName: selectedCustomer == "Walk-in Customer"
-                            ? "Walk-in Customer"
-                            : selectedCustomer,
-                      ),
-                    );
+                    if (selectedPayment == "Cash") {
+                      if (_tunaiAmount == null || _tunaiAmount! < total) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Jumlah tunai tidak cukup!")),
+                        );
+                        return;
+                      }
+                    }
+
+                    Navigator.of(context).pop();
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (_) => SuccessPaymentDialog(
+                          totalAmount: total,
+                          paymentMethod: selectedPayment,
+                          customerName: selectedCustomer,
+                          cart: localCart,
+                          products: widget.products,
+                          changeAmount: kembalian,
+                        ),
+                      );
+                    });
                     widget.onPaymentSuccess();
                   },
                   style: ElevatedButton.styleFrom(
@@ -388,74 +544,6 @@ class _CheckoutModalState extends State<CheckoutModal> {
             const SizedBox(height: 20),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildProductItem({
-    required String name,
-    required int price,
-    required int quantity,
-    required int total,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            name,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "${formatRupiah(price)} / pcs",
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade600,
-                ),
-              ),
-              if (quantity > 1)
-                Text(
-                  "$quantity +",
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              formatRupiah(total),
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: AppColors.softPink,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

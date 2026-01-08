@@ -78,7 +78,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Cari Produk',
+                        'search products',
                         style: TextStyle(color: Colors.grey, fontSize: 16),
                       ),
                     ),

@@ -11,8 +11,7 @@ class CustomDialog {
       case DialogType.error:
         return Icons.close_rounded;
       case DialogType.warning:
-      default:
-        return Icons.warning_rounded;
+      return Icons.warning_rounded;
     }
   }
 
@@ -23,8 +22,7 @@ class CustomDialog {
       case DialogType.error:
         return Colors.red;
       case DialogType.warning:
-      default:
-        return Colors.amber[700]!;
+      return Colors.amber[700]!;
     }
   }
 

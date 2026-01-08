@@ -1,12 +1,13 @@
-// lib/ui/screens/chasier/widget/cart_summary_card.dart
+// lib/features/cashier/widgets/cart_summary_card.dart
 import 'package:flutter/material.dart';
 import 'package:kasir_kosmetic/core/constants/app_colors.dart';
-
+import 'package:kasir_kosmetic/data/models/product_model.dart';
+import 'package:collection/collection.dart';
 
 class CartSummaryCard extends StatelessWidget {
-  final Map<int, int> cart;                    
-  final List<Map<String, dynamic>> products;   
-  final VoidCallback onCheckoutPressed;       
+  final Map<int, int> cart;
+  final List<ProductModel> products;
+  final VoidCallback onCheckoutPressed;
 
   const CartSummaryCard({
     super.key,
@@ -15,109 +16,106 @@ class CartSummaryCard extends StatelessWidget {
     required this.onCheckoutPressed,
   });
 
-  // Hitung total harga
-  int get _totalPrice {
+  int get totalPrice {
     int total = 0;
-    cart.forEach((productId, qty) {
-      final product = products.firstWhere(
-        (p) => p["id"] == productId,
-        orElse: () => <String, dynamic>{},
-      );
-      final price = product["price"] as int? ?? 0;
-      total += price * qty;
+    cart.forEach((id, qty) {
+      final product = products.where((p) => p.id == id).firstOrNull;
+      if (product != null) {
+        total += product.hargaJual.toInt() * qty;
+      }
     });
     return total;
   }
 
-  // Format rupiah sederhana (dengan titik ribuan)
-  String _formatRupiah(int amount) {
-    final formatted = amount
-        .toString()
-        .replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
-    return 'Rp $formatted';
+  static String formatRupiah(int amount) {
+    if (amount == 0) return "Rp 0";
+    return "Rp ${amount.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]}.',
+    )}";
   }
 
   @override
   Widget build(BuildContext context) {
-    final hasItems = cart.isNotEmpty;
-    if (!hasItems) return const SizedBox.shrink();
-    
+    if (cart.isEmpty) return const SizedBox.shrink();
+
     return Container(
-      margin: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(16), // radius lebih besar agar lembut
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
+            blurRadius: 8,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Row(
         children: [
-          // Icon keranjang
+          // IKON KERANJANG DALAM Kotak PINK
           Container(
-            width: 60,
-            height: 60,
+            width: 56,
+            height: 56,
             decoration: BoxDecoration(
-              color: AppColors.softPink,
-              borderRadius: BorderRadius.circular(10),
+              color: AppColors.softPink.withOpacity(0.3), // pink muda
+              borderRadius: BorderRadius.circular(12),
             ),
-            alignment: Alignment.center,
-            child: const Icon(
-              Icons.shopping_cart_outlined,
-              color: Colors.white,
+            child: Icon(
+              Icons.shopping_cart,
+              color: AppColors.softPink,
               size: 28,
             ),
           ),
-          const SizedBox(width: 12),
 
-          // Info keranjang
+          const SizedBox(width: 16),
+
+          // TEKS: "Keranjang Belanja" + Total Harga
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
+                Text(
                   "Keranjang Belanja",
                   style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
                     color: AppColors.roseShade,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _formatRupiah(_totalPrice),
+                  formatRupiah(totalPrice),
                   style: const TextStyle(
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.roseShade,
+                    color: Colors.black87,
                   ),
                 ),
               ],
             ),
           ),
 
-          // Tombol Checkout
+          // TOMBOL CHECKOUT
           ElevatedButton(
-            onPressed: hasItems ? onCheckoutPressed : null, 
+            onPressed: onCheckoutPressed,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.softPink,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              disabledBackgroundColor: Colors.grey[300],
+              backgroundColor: AppColors.softPink.withOpacity(0.3),
+              foregroundColor: AppColors.softPink,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+              elevation: 0,
             ),
             child: const Text(
               "Check Out",
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],

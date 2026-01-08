@@ -249,11 +249,14 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
                 const SizedBox(height: 16),
 
                 // Stok
-                _buildInputField(
-                  controller: _stockCtrl,
-                  placeholder: "Stok",
-                  keyboardType: TextInputType.number,
-                ),
+                // Tampilkan field Stok hanya saat menambah produk baru (bukan edit)
+                if (widget.product == null) ...[
+                  _buildInputField(
+                    controller: _stockCtrl,
+                    placeholder: "Stok",
+                    keyboardType: TextInputType.number,
+                  ),
+                ],
                 const SizedBox(height: 24),
 
                 // Upload Gambar
@@ -336,10 +339,6 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
     required String hint,
   }) {
     // Cek apakah field sudah berisi angka (bukan hanya "Rp ")
-    bool hasValue =
-        controller.text.isNotEmpty &&
-        controller.text != 'Rp ' &&
-        controller.text.length > 3;
 
     return Container(
       decoration: BoxDecoration(
@@ -382,7 +381,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
           String formatted = NumberFormat(
             '#,##0',
             'id_ID',
-          ).format(int.tryParse ?? 0);
+          ).format(int.tryParse);
           String result = 'Rp $formatted';
 
           controller.text = result;

@@ -1,7 +1,5 @@
-// supabase_client.dart
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/config/supabase_config.dart';
-import 'package:kasir_kosmetic/data/services/product_service.dart';
 
 class SupabaseClientService {
   static SupabaseClient? _instance;
