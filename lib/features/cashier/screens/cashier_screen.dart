@@ -20,12 +20,6 @@ class _CashierScreenState extends State<CashierScreen> {
   String _searchQuery = '';
   String _selectedCategory = 'All'; // 'All', 'Skincare', 'Makeup'
 
-  void _addToCart(int productId) {
-    setState(() {
-      _cart[productId] = (_cart[productId] ?? 0) + 1;
-    });
-  }
-
   String formatRupiah(int amount) {
     final formatted = amount.toString().replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
@@ -37,19 +31,37 @@ class _CashierScreenState extends State<CashierScreen> {
   List<ProductModel> _filterProducts(List<ProductModel> products) {
     if (_searchQuery.isNotEmpty) {
       products = products
-          .where(
-            (p) => p.nama.toLowerCase().contains(_searchQuery.toLowerCase()),
-          )
+          .where((p) => p.nama.toLowerCase().contains(_searchQuery.toLowerCase()))
           .toList();
     }
 
     if (_selectedCategory != 'All') {
-      products = products
-          .where((p) => p.kategori == _selectedCategory)
-          .toList();
+      products = products.where((p) => p.kategori == _selectedCategory).toList();
     }
 
     return products;
+  }
+
+  void _showStockErrorDialog(BuildContext context, ProductModel product, int currentQty) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Stok Tidak Mencukupi", style: TextStyle(fontWeight: FontWeight.bold)),
+        content: Text(
+          "Produk: ${product.nama}\n"
+          "Stok tersedia: ${product.stok}\n"
+          "Sudah dipilih: $currentQty\n\n"
+          "Tidak bisa menambah lagi.",
+          style: const TextStyle(fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Tutup", style: TextStyle(color: AppColors.softPink)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -123,17 +135,17 @@ class _CashierScreenState extends State<CashierScreen> {
                       child: DropdownButton<String>(
                         value: _selectedCategory,
                         items: [
-                          DropdownMenuItem(
+                          const DropdownMenuItem(
                             value: 'All',
-                            child: const Text('See All'),
+                            child: Text('See All'),
                           ),
-                          DropdownMenuItem(
+                          const DropdownMenuItem(
                             value: 'Skincare',
-                            child: const Text('Skincare'),
+                            child: Text('Skincare'),
                           ),
-                          DropdownMenuItem(
+                          const DropdownMenuItem(
                             value: 'Makeup',
-                            child: const Text('Makeup'),
+                            child: Text('Makeup'),
                           ),
                         ],
                         onChanged: (v) {
@@ -141,7 +153,7 @@ class _CashierScreenState extends State<CashierScreen> {
                             _selectedCategory = v!;
                           });
                         },
-                        underline: Container(), // hilangkan garis bawah
+                        underline: Container(),
                         style: const TextStyle(
                           fontSize: 16,
                           color: Colors.black87,
@@ -152,9 +164,7 @@ class _CashierScreenState extends State<CashierScreen> {
                           size: 20,
                         ),
                         isExpanded: true,
-                        borderRadius: BorderRadius.circular(
-                          12,
-                        ), // untuk popup dropdown juga rounded
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                   ],
@@ -170,9 +180,18 @@ class _CashierScreenState extends State<CashierScreen> {
                   itemCount: filteredProducts.length,
                   itemBuilder: (context, index) {
                     final product = filteredProducts[index];
+                    final currentQty = _cart[product.id] ?? 0;
 
                     return GestureDetector(
-                      onTap: () => _addToCart(product.id),
+                      onTap: () {
+                        if (currentQty + 1 > product.stok) {
+                          _showStockErrorDialog(context, product, currentQty);
+                          return;
+                        }
+                        setState(() {
+                          _cart[product.id] = currentQty + 1;
+                        });
+                      },
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 16),
                         padding: const EdgeInsets.all(16),
@@ -219,15 +238,38 @@ class _CashierScreenState extends State<CashierScreen> {
                                       color: AppColors.roseShade,
                                     ),
                                   ),
+                                  // ✅ Tampilkan stok tersedia
+                                  Text(
+                                    "Stok: ${product.stok}",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: product.stok == 0 ? Colors.red : Colors.grey,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                Text("Stok: ${product.stok}"),
-                                 IconButton(
-                                  onPressed: () => _addToCart(product.id),
+                                // ✅ Stok juga di sini (opsional)
+                                Text(
+                                  "Stok: ${product.stok}",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: product.stok == 0 ? Colors.red : Colors.grey,
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: () {
+                                    if (currentQty + 1 > product.stok) {
+                                      _showStockErrorDialog(context, product, currentQty);
+                                      return;
+                                    }
+                                    setState(() {
+                                      _cart[product.id] = currentQty + 1;
+                                    });
+                                  },
                                   icon: const Icon(
                                     Icons.add_shopping_cart,
                                     color: AppColors.softPink,

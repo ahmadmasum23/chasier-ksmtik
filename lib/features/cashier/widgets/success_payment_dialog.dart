@@ -192,9 +192,21 @@ class SuccessPaymentDialog extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const Text(
-                  "Preview Struk",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "Preview Struk",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 24),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 20),
 
@@ -399,140 +411,208 @@ class SuccessPaymentDialog extends StatelessWidget {
     );
   }
 
-  Future<void> _generateAndPrintReceipt(String transactionId, String dateFormat) async {
-  final pdf = pw.Document();
+  Future<void> _generateAndPrintReceipt(
+    String transactionId,
+    String dateFormat,
+  ) async {
+    final pdf = pw.Document();
 
-  final a5PageFormat = PdfPageFormat.a5.copyWith(
-    marginLeft: 0,
-    marginRight: 0,
-    marginTop: 0,
-    marginBottom: 0,
-  );
+    final a5PageFormat = PdfPageFormat.a5.copyWith(
+      marginLeft: 0,
+      marginRight: 0,
+      marginTop: 0,
+      marginBottom: 0,
+    );
 
-  // Hitung nominal yang dibayar jika Cash
-  int? cashPaidAmount;
-  if (paymentMethod == "Cash" && changeAmount != null) {
-    cashPaidAmount = totalAmount + changeAmount!;
-  }
+    // Hitung nominal yang dibayar jika Cash
+    int? cashPaidAmount;
+    if (paymentMethod == "Cash" && changeAmount != null) {
+      cashPaidAmount = totalAmount + changeAmount!;
+    }
 
-  pdf.addPage(
-    pw.Page(
-      pageFormat: a5PageFormat,
-      build: (pw.Context context) {
-        return pw.Padding(
-          padding: const pw.EdgeInsets.all(12),
-          child: pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              // Header
-              pw.Center(child: pw.Text('KASIR KOSMETIK', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold))),
-              pw.SizedBox(height: 2),
-              pw.Center(child: pw.Text('Jl. SMK Brantas Karangkates', style: pw.TextStyle(fontSize: 11))),
-              pw.Center(child: pw.Text('Malang, Jawa Timur', style: pw.TextStyle(fontSize: 11))),
-              pw.SizedBox(height: 10),
-              pw.Divider(thickness: 1),
-              pw.SizedBox(height: 8),
-
-              // Info Transaksi
-              pw.Text('No Transaksi: $transactionId', style: pw.TextStyle(fontSize: 11)),
-              pw.Text('Tanggal: $dateFormat', style: pw.TextStyle(fontSize: 11)),
-              pw.Text('Pelanggan: ${customerName.isEmpty ? "Umum" : customerName}', style: pw.TextStyle(fontSize: 11)),
-              pw.SizedBox(height: 8),
-              pw.Divider(thickness: 1),
-              pw.SizedBox(height: 8),
-
-              // Daftar Barang
-              pw.Text('Barang yang Dibeli:', style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold)),
-              pw.SizedBox(height: 6),
-
-              ...cart.entries.map((entry) {
-                final product = products.firstWhere(
-                  (p) => p.id == entry.key,
-                  orElse: () => ProductModel(
-                    id: 0,
-                    nama: 'Produk Tidak Ditemukan',
-                    hargaBeli: 0,
-                    hargaJual: 0,
-                    stok: 0,
-                    dibuatPada: DateTime.now(),
-                    kategori: '',
-                  ),
-                );
-                final totalHarga = product.hargaJual.toInt() * entry.value;
-                return pw.Row(
-                  children: [
-                    pw.Expanded(
-                      child: pw.Text('${product.nama} x${entry.value}', style: pw.TextStyle(fontSize: 12)),
+    pdf.addPage(
+      pw.Page(
+        pageFormat: a5PageFormat,
+        build: (pw.Context context) {
+          return pw.Padding(
+            padding: const pw.EdgeInsets.all(12),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                // Header
+                pw.Center(
+                  child: pw.Text(
+                    'KASIR KOSMETIK',
+                    style: pw.TextStyle(
+                      fontSize: 18,
+                      fontWeight: pw.FontWeight.bold,
                     ),
-                    pw.Text(_formatRupiah(totalHarga), style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+                  ),
+                ),
+                pw.SizedBox(height: 2),
+                pw.Center(
+                  child: pw.Text(
+                    'Jl. SMK Brantas Karangkates',
+                    style: pw.TextStyle(fontSize: 11),
+                  ),
+                ),
+                pw.Center(
+                  child: pw.Text(
+                    'Malang, Jawa Timur',
+                    style: pw.TextStyle(fontSize: 11),
+                  ),
+                ),
+                pw.SizedBox(height: 10),
+                pw.Divider(thickness: 1),
+                pw.SizedBox(height: 8),
+
+                // Info Transaksi
+                pw.Text(
+                  'No Transaksi: $transactionId',
+                  style: pw.TextStyle(fontSize: 11),
+                ),
+                pw.Text(
+                  'Tanggal: $dateFormat',
+                  style: pw.TextStyle(fontSize: 11),
+                ),
+                pw.Text(
+                  'Pelanggan: ${customerName.isEmpty ? "Umum" : customerName}',
+                  style: pw.TextStyle(fontSize: 11),
+                ),
+                pw.SizedBox(height: 8),
+                pw.Divider(thickness: 1),
+                pw.SizedBox(height: 8),
+
+                // Daftar Barang
+                pw.Text(
+                  'Barang yang Dibeli:',
+                  style: pw.TextStyle(
+                    fontSize: 13,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 6),
+
+                ...cart.entries.map((entry) {
+                  final product = products.firstWhere(
+                    (p) => p.id == entry.key,
+                    orElse: () => ProductModel(
+                      id: 0,
+                      nama: 'Produk Tidak Ditemukan',
+                      hargaBeli: 0,
+                      hargaJual: 0,
+                      stok: 0,
+                      dibuatPada: DateTime.now(),
+                      kategori: '',
+                    ),
+                  );
+                  final totalHarga = product.hargaJual.toInt() * entry.value;
+                  return pw.Row(
+                    children: [
+                      pw.Expanded(
+                        child: pw.Text(
+                          '${product.nama} x${entry.value}',
+                          style: pw.TextStyle(fontSize: 12),
+                        ),
+                      ),
+                      pw.Text(
+                        _formatRupiah(totalHarga),
+                        style: pw.TextStyle(
+                          fontSize: 12,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
+
+                pw.SizedBox(height: 10),
+                pw.Divider(thickness: 1),
+                pw.SizedBox(height: 8),
+
+                // Rincian Pembayaran
+                pw.Text(
+                  'Rincian Pembayaran:',
+                  style: pw.TextStyle(
+                    fontSize: 13,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 6),
+
+                pw.Row(
+                  children: [
+                    pw.Text('Total Belanja', style: pw.TextStyle(fontSize: 12)),
+                    pw.Spacer(),
+                    pw.Text(
+                      _formatRupiah(totalAmount),
+                      style: pw.TextStyle(fontSize: 12),
+                    ),
                   ],
-                );
-              }).toList(),
+                ),
 
-              pw.SizedBox(height: 10),
-              pw.Divider(thickness: 1),
-              pw.SizedBox(height: 8),
+                // Metode Pembayaran
+                pw.Row(
+                  children: [
+                    pw.Text('Metode', style: pw.TextStyle(fontSize: 12)),
+                    pw.Spacer(),
+                    pw.Text(paymentMethod, style: pw.TextStyle(fontSize: 12)),
+                  ],
+                ),
 
-              // Rincian Pembayaran
-              pw.Text('Rincian Pembayaran:', style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold)),
-              pw.SizedBox(height: 6),
-
-              pw.Row(
-                children: [
-                  pw.Text('Total Belanja', style: pw.TextStyle(fontSize: 12)),
-                  pw.Spacer(),
-                  pw.Text(_formatRupiah(totalAmount), style: pw.TextStyle(fontSize: 12)),
+                // Jika Cash: tampilkan Dibayar & Kembalian
+                if (paymentMethod == "Cash") ...[
+                  if (cashPaidAmount != null)
+                    pw.Row(
+                      children: [
+                        pw.Text('Dibayar', style: pw.TextStyle(fontSize: 12)),
+                        pw.Spacer(),
+                        pw.Text(
+                          _formatRupiah(cashPaidAmount),
+                          style: pw.TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  if (changeAmount != null && changeAmount! > 0)
+                    pw.Row(
+                      children: [
+                        pw.Text('Kembalian', style: pw.TextStyle(fontSize: 12)),
+                        pw.Spacer(),
+                        pw.Text(
+                          _formatRupiah(changeAmount!),
+                          style: pw.TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
                 ],
-              ),
 
-              // Metode Pembayaran
-              pw.Row(
-                children: [
-                  pw.Text('Metode', style: pw.TextStyle(fontSize: 12)),
-                  pw.Spacer(),
-                  pw.Text(paymentMethod, style: pw.TextStyle(fontSize: 12)),
-                ],
-              ),
+                pw.SizedBox(height: 12),
+                pw.Divider(thickness: 1),
+                pw.SizedBox(height: 16),
 
-              // Jika Cash: tampilkan Dibayar & Kembalian
-              if (paymentMethod == "Cash") ...[
-                if (cashPaidAmount != null)
-                  pw.Row(
-                    children: [
-                      pw.Text('Dibayar', style: pw.TextStyle(fontSize: 12)),
-                      pw.Spacer(),
-                      pw.Text(_formatRupiah(cashPaidAmount), style: pw.TextStyle(fontSize: 12)),
-                    ],
+                // Footer
+                pw.Center(
+                  child: pw.Text(
+                    'Terima kasih telah berbelanja!',
+                    style: pw.TextStyle(
+                      fontSize: 14,
+                      fontWeight: pw.FontWeight.normal,
+                    ),
                   ),
-                if (changeAmount != null && changeAmount! > 0)
-                  pw.Row(
-                    children: [
-                      pw.Text('Kembalian', style: pw.TextStyle(fontSize: 12)),
-                      pw.Spacer(),
-                      pw.Text(_formatRupiah(changeAmount!), style: pw.TextStyle(fontSize: 12)),
-                    ],
-                  ),
+                ),
+
+                pw.SizedBox(height: 20),
               ],
+            ),
+          );
+        },
+      ),
+    );
 
-              pw.SizedBox(height: 12),
-              pw.Divider(thickness: 1),
-              pw.SizedBox(height: 16),
-
-              // Footer
-              pw.Center(child: pw.Text('Terima kasih telah berbelanja!', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.normal))),
-
-              pw.SizedBox(height: 20),
-            ],
-          ),
-        );
-      },
-    ),
-  );
-
-  await Printing.layoutPdf(
-    onLayout: (PdfPageFormat format) async => pdf.save(),
-  );
-}
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => pdf.save(),
+    );
+  }
 
   Widget _buildInfoRow(String label, String value) {
     return Padding(

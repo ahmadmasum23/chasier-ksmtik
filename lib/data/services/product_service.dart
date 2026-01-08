@@ -45,9 +45,7 @@ class ProductService {
 
   Future<bool> addProduct(ProductModel product) async {
     try {
-      await _client
-          .from('produk')
-          .insert(product.toJson(includeId: false));
+      await _client.from('produk').insert(product.toJson(includeId: false));
       return true;
     } catch (e) {
       print("Error addProduct: $e");
@@ -79,66 +77,79 @@ class ProductService {
   }
 
   // Di ProductService - GANTI method uploadImageToStorage
-Future<String?> uploadImageToStorage(Uint8List imageBytes, String fileName) async {
-  try {
-    print('📤 Uploading to Supabase Storage: $fileName');
-    
-    // ✅ PASTIKAN fileName TIDAK ADA PATH, HANYA NAMA FILE
-    final cleanFileName = fileName.replaceAll('images/', ''); // Hapus prefix images/ jika ada
-    
-    if (kIsWeb) {
-      final response = await _client.storage
-          .from('images')
-          .uploadBinary(
-            cleanFileName, // ✅ GUNAKAN cleanFileName
-            imageBytes,
-            fileOptions: FileOptions(
-              upsert: true,
-              contentType: 'image/jpeg',
-            ),
-          );
+  Future<String?> uploadImageToStorage(
+    Uint8List imageBytes,
+    String fileName,
+  ) async {
+    try {
+      print('📤 Uploading to Supabase Storage: $fileName');
 
-      print('✅ File uploaded: $response');
+      // ✅ PASTIKAN fileName TIDAK ADA PATH, HANYA NAMA FILE
+      final cleanFileName = fileName.replaceAll(
+        'images/',
+        '',
+      ); // Hapus prefix images/ jika ada
 
-      // ✅ GET PUBLIC URL YANG BENAR
-      final publicUrl = _client.storage
-          .from('images')
-          .getPublicUrl(cleanFileName); // ✅ GUNAKAN cleanFileName
+      if (kIsWeb) {
+        final response = await _client.storage
+            .from('images')
+            .uploadBinary(
+              cleanFileName, // ✅ GUNAKAN cleanFileName
+              imageBytes,
+              fileOptions: FileOptions(upsert: true, contentType: 'image/jpeg'),
+            );
 
-      print('🌐 Public URL: $publicUrl');
-      
-      return publicUrl;
-    } else {
-      final tempDir = await getTemporaryDirectory();
-      final tempFile = File('${tempDir.path}/$cleanFileName');
-      await tempFile.writeAsBytes(imageBytes);
-      
-      final response = await _client.storage
-          .from('images')
-          .upload(
-            cleanFileName, // ✅ GUNAKAN cleanFileName
-            tempFile,
-            fileOptions: FileOptions(
-              upsert: true,
-              contentType: 'image/jpeg',
-            ),
-          );
+        print('✅ File uploaded: $response');
 
-      await tempFile.delete();
+        // ✅ GET PUBLIC URL YANG BENAR
+        final publicUrl = _client.storage
+            .from('images')
+            .getPublicUrl(cleanFileName); // ✅ GUNAKAN cleanFileName
 
-      print('✅ File uploaded: $response');
+        print('🌐 Public URL: $publicUrl');
 
-      final publicUrl = _client.storage
-          .from('images')
-          .getPublicUrl(cleanFileName); // ✅ GUNAKAN cleanFileName
+        return publicUrl;
+      } else {
+        final tempDir = await getTemporaryDirectory();
+        final tempFile = File('${tempDir.path}/$cleanFileName');
+        await tempFile.writeAsBytes(imageBytes);
 
-      print('🌐 Public URL: $publicUrl');
-      
-      return publicUrl;
+        final response = await _client.storage
+            .from('images')
+            .upload(
+              cleanFileName, // ✅ GUNAKAN cleanFileName
+              tempFile,
+              fileOptions: FileOptions(upsert: true, contentType: 'image/jpeg'),
+            );
+
+        await tempFile.delete();
+
+        print('✅ File uploaded: $response');
+
+        final publicUrl = _client.storage
+            .from('images')
+            .getPublicUrl(cleanFileName); // ✅ GUNAKAN cleanFileName
+
+        print('🌐 Public URL: $publicUrl');
+
+        return publicUrl;
+      }
+    } catch (e) {
+      print('❌ Error uploading to Supabase Storage: $e');
+      rethrow;
     }
-  } catch (e) {
-    print('❌ Error uploading to Supabase Storage: $e');
-    rethrow;
   }
-}
+
+  Future<bool> updateStock(int productId, int newStock) async {
+    try {
+      await _client
+          .from('produk')
+          .update({'stok': newStock})
+          .eq('id', productId);
+      return true;
+    } catch (e) {
+      print("Error updateStock: $e");
+      return false;
+    }
+  }
 }

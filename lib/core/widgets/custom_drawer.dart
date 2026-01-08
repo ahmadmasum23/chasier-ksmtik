@@ -45,7 +45,10 @@ class _AppDrawerState extends State<AppDrawer> {
               ),
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 25.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20.0,
+                vertical: 25.0,
+              ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -96,7 +99,7 @@ class _AppDrawerState extends State<AppDrawer> {
               ),
             ),
           ),
-          
+
           // Menu items
           Expanded(
             child: ListView(
@@ -150,9 +153,9 @@ class _AppDrawerState extends State<AppDrawer> {
                     _navigateToRoute(AppRoutes.salesReport);
                   },
                 ),
-                
+
                 const SizedBox(height: 20),
-                
+
                 // Menu Admin
                 const Padding(
                   padding: EdgeInsets.only(left: 16, bottom: 8),
@@ -165,7 +168,7 @@ class _AppDrawerState extends State<AppDrawer> {
                     ),
                   ),
                 ),
-                
+
                 _buildMenuItem(
                   icon: Icons.person_add,
                   title: 'Tambah User',
@@ -177,7 +180,7 @@ class _AppDrawerState extends State<AppDrawer> {
               ],
             ),
           ),
-          
+
           // Logout button di bagian bawah
           Container(
             padding: const EdgeInsets.all(16),
@@ -185,20 +188,18 @@ class _AppDrawerState extends State<AppDrawer> {
               icon: Icons.logout,
               title: 'Logout',
               route: '/logout', // Route khusus untuk logout
-             onTap: () {
-  Get.back(); // Tutup drawer dulu
+              onTap: () {
+                Get.back(); // Tutup drawer dulu
 
-  // Tambahkan logika logout di sini (misal hapus token, clear session)
-  // await AuthService.logout();
+                // Tambahkan logika logout di sini (misal hapus token, clear session)
+                // await AuthService.logout();
 
-  // Arahkan ke halaman LoginScreen
-  Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(
-      builder: (_) => const LoginScreen(),
-    ),
-  );
-},
+                // Arahkan ke halaman LoginScreen
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                );
+              },
 
               color: Colors.red,
             ),
@@ -216,11 +217,13 @@ class _AppDrawerState extends State<AppDrawer> {
     Color? color,
   }) {
     final isActive = _currentRoute == route;
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: isActive ? AppColors.softPink.withOpacity(0.2) : Colors.transparent,
+        color: isActive
+            ? AppColors.softPink.withOpacity(0.2)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
       ),
       child: ListTile(
@@ -237,9 +240,7 @@ class _AppDrawerState extends State<AppDrawer> {
         ),
         onTap: onTap,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }

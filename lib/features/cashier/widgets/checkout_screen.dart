@@ -4,7 +4,9 @@ import 'package:kasir_kosmetic/core/constants/app_colors.dart';
 import 'package:kasir_kosmetic/data/models/product_model.dart';
 import 'package:kasir_kosmetic/data/models/pelanggan_model.dart';
 import 'package:kasir_kosmetic/data/services/pelanggan_service.dart';
+import 'package:kasir_kosmetic/data/services/product_service.dart';
 import 'package:kasir_kosmetic/features/cashier/widgets/success_payment_dialog.dart';
+import 'package:collection/collection.dart';
 
 class CheckoutModal extends StatefulWidget {
   final Map<int, int> cart;
@@ -100,6 +102,16 @@ class _CheckoutModalState extends State<CheckoutModal> {
   }
 
   void _updateQty(int productId, int newQty) {
+    final product = widget.products.firstWhereOrNull((p) => p.id == productId);
+    if (product == null) return;
+
+    final maxQty = product.stok;
+    if (newQty > maxQty) {
+      // ✅ Gunakan pop-up, bukan SnackBar
+      _showStockExceededDialog(context, product);
+      return;
+    }
+
     if (newQty <= 0) {
       setState(() {
         localCart.remove(productId);
@@ -126,6 +138,73 @@ class _CheckoutModalState extends State<CheckoutModal> {
     setState(() {
       _tunaiAmount = int.parse(clean);
     });
+  }
+
+  // ✅ Validasi dan kurangi stok di database
+  Future<bool> _validateAndReduceStock() async {
+    for (final entry in localCart.entries) {
+      final productId = entry.key;
+      final qtyToBuy = entry.value;
+      final product = widget.products.firstWhereOrNull((p) => p.id == productId);
+      if (product == null) {
+        _showStockExceededDialog(context, ProductModel(
+          id: productId,
+          nama: 'Produk Tidak Ditemukan',
+          hargaBeli: 0,
+          hargaJual: 0,
+          stok: 0,
+          dibuatPada: DateTime.now(),
+          kategori: '',
+        ));
+        return false;
+      }
+      if (product.stok < qtyToBuy) {
+        _showStockExceededDialog(context, product);
+        return false;
+      }
+    }
+
+    final productService = ProductService();
+    for (final entry in localCart.entries) {
+      final productId = entry.key;
+      final qtyToBuy = entry.value;
+      final product = widget.products.firstWhere((p) => p.id == productId);
+      final newStock = product.stok - qtyToBuy;
+
+      final success = await productService.updateStock(productId, newStock);
+      if (!success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Gagal mengupdate stok untuk: ${product.nama}")),
+        );
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // ✅ POP-UP UNTUK STOK TIDAK CUKUP / HABIS
+  void _showStockExceededDialog(BuildContext context, ProductModel product) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          product.stok == 0 ? "Stok Habis" : "Stok Tidak Mencukupi",
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          product.stok == 0
+              ? "Maaf, stok ${product.nama} sudah habis."
+              : "Stok ${product.nama} hanya tersedia ${product.stok}.",
+          style: const TextStyle(fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Mengerti", style: TextStyle(color: AppColors.softPink)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -212,6 +291,8 @@ class _CheckoutModalState extends State<CheckoutModal> {
                   if (product == null) return const SizedBox.shrink();
                   final price = product.hargaJual.toInt();
                   final totalItem = price * qty;
+                  final maxQty = product.stok;
+
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Container(
@@ -253,14 +334,27 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                         color: Colors.grey.shade600,
                                       ),
                                     ),
+                                    Text(
+                                      "Stok tersedia: $maxQty",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: maxQty == 0 ? Colors.red : Colors.grey.shade600,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
                               Row(
                                 children: [
                                   IconButton(
-                                    onPressed: () => _updateQty(productId, qty - 1),
-                                    icon: const Icon(Icons.remove, size: 20),
+                                    onPressed: qty > 1
+                                        ? () => _updateQty(productId, qty - 1)
+                                        : null,
+                                    icon: Icon(
+                                      Icons.remove,
+                                      size: 20,
+                                      color: qty > 1 ? null : Colors.grey,
+                                    ),
                                     padding: EdgeInsets.zero,
                                     constraints: const BoxConstraints(),
                                     splashRadius: 20,
@@ -273,8 +367,15 @@ class _CheckoutModalState extends State<CheckoutModal> {
                                       color: Colors.black87,
                                     ),
                                   ),
+                                  // ✅ TOMBOL PLUS: SELALU BISA DI-KLIK, TAPI VALIDASI DI DALAM
                                   IconButton(
-                                    onPressed: () => _updateQty(productId, qty + 1),
+                                    onPressed: () {
+                                      if (qty >= maxQty) {
+                                        _showStockExceededDialog(context, product);
+                                        return;
+                                      }
+                                      _updateQty(productId, qty + 1);
+                                    },
                                     icon: const Icon(Icons.add, size: 20),
                                     padding: EdgeInsets.zero,
                                     constraints: const BoxConstraints(),
@@ -470,7 +571,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
                   ],
 
                   // 🔸 CARD
-                  if (selectedPayment == "Card" ) ...[
+                  if (selectedPayment == "Card") ...[
                     const SizedBox(height: 12),
                     Center(
                       child: Column(
@@ -494,7 +595,7 @@ class _CheckoutModalState extends State<CheckoutModal> {
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     if (selectedPayment == "Cash") {
                       if (_tunaiAmount == null || _tunaiAmount! < total) {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -502,6 +603,11 @@ class _CheckoutModalState extends State<CheckoutModal> {
                         );
                         return;
                       }
+                    }
+
+                    final stockValid = await _validateAndReduceStock();
+                    if (!stockValid) {
+                      return;
                     }
 
                     Navigator.of(context).pop();

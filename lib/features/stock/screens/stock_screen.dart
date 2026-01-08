@@ -4,6 +4,7 @@ import 'package:kasir_kosmetic/core/constants/app_colors.dart';
 import 'package:kasir_kosmetic/core/widgets/base_screen.dart';
 import 'package:kasir_kosmetic/data/models/product_model.dart';
 import 'package:kasir_kosmetic/data/services/product_service.dart';
+import 'package:kasir_kosmetic/features/stock/widget/stock_edit_dialog.dart';
 
 class StockProductScreen extends StatefulWidget {
   const StockProductScreen({super.key});
@@ -174,79 +175,96 @@ class _StockProductScreenState extends State<StockProductScreen> {
   }
 
   Widget _buildProductItem(ProductModel product) {
-    final minStock = _getMinStock(product);
-    final bool isLow = product.stok > 0 && product.stok <= minStock;
-    final bool isOutOfStock = product.stok == 0;
+  final minStock = _getMinStock(product);
+  final bool isLow = product.stok > 0 && product.stok <= minStock;
+  final bool isOutOfStock = product.stok == 0;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+  return Container(
+    margin: const EdgeInsets.only(bottom: 12),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.grey.withOpacity(0.1),
+          blurRadius: 10,
+          offset: const Offset(0, 2),
+        ),
+      ],
+    ),
+    child: Row(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.network(
+            product.urlGambar ?? '',
+            width: 60,
+            height: 60,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                width: 60,
+                height: 60,
+                color: Colors.grey[300],
+                child: const Icon(Icons.image_not_supported),
+              );
+            },
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.network(
-              product.urlGambar ?? '',
-              width: 60,
-              height: 60,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  width: 60,
-                  height: 60,
-                  color: Colors.grey[300],
-                  child: const Icon(Icons.image_not_supported),
-                );
-              },
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  product.nama,
-                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  product.kategori ?? '-',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                ),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Stok : ${product.stok}",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                  color: isOutOfStock || isLow ? Colors.red : Colors.black,
-                ),
+                product.nama,
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 8),
-              const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+              const SizedBox(height: 4),
+              Text(
+                product.kategori ?? '-',
+                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+              ),
             ],
           ),
-        ],
-      ),
-    );
-  }
+        ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              "Stok : ${product.stok}",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+                color: isOutOfStock || isLow ? Colors.red : Colors.black,
+              ),
+            ),
+            const SizedBox(height: 8),
+            // ✅ GANTI ICON JADI PENSIL & TAMBAH FUNGSI EDIT
+            GestureDetector(
+              onTap: () async {
+                final result = await showDialog<int>(
+                  context: context,
+                  builder: (context) => StockEditDialog(product: product),
+                );
+                if (result != null) {
+                  // ✅ Refresh data setelah stok diupdate
+                  setState(() {});
+                }
+              },
+              child: const Icon(
+                Icons.edit,
+                size: 20,
+                color: AppColors.roseShade,
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
 }
